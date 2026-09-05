@@ -208,9 +208,8 @@ class SubstrateDescriptor:
             raise SubstrateDiscoveryError("substrate_id must be a SubstrateId")
         _require_token(self.substrate_id.value, field_name="substrate_id")
         if ":" not in self.substrate_id.value:
-            raise SubstrateDiscoveryError(
-                "substrate_id must be a namespaced identifier"
-            )
+            message = "substrate_id must be a namespaced identifier"
+            raise SubstrateDiscoveryError(message)
 
         _require_text(
             self.substrate_version,
