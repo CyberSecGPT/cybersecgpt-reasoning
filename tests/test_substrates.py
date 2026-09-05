@@ -320,7 +320,12 @@ def test_validated_substrate_rejects_wrong_component_types() -> None:
 @pytest.mark.parametrize(
     ("descriptor", "validation", "observed_at", "message"),
     [
-        (cast(SubstrateDescriptor, "descriptor"), make_validation(), OBSERVED_AT, "descriptor"),
+        (
+            cast(SubstrateDescriptor, "descriptor"),
+            make_validation(),
+            OBSERVED_AT,
+            "descriptor",
+        ),
         (
             make_descriptor(),
             cast(SubstrateValidationEvidence, "validation"),
