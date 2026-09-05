@@ -6,9 +6,9 @@ Changes must conform to Accepted ADR-0011 and the Native Brain conformance profi
 
 ## Development setup
 
-CI uses the verified typed Foundation baseline at commit `30a5c23f47b63ab0196fb4c40378b127d51acf36`.
+CI uses the verified typed and split-package-compatible Foundation baseline at commit `4d534c0142ab3198078dd96a95d310a298165c5c`.
 
-For local development, install that Foundation revision first, then install this repository with its `dev` extra. The Foundation distribution publishes the PEP 561 `py.typed` marker, so strict downstream type checking must remain enabled rather than suppressing `import-untyped` diagnostics.
+For local development, install that Foundation revision first, then install this repository with its `dev` extra. Foundation publishes the PEP 561 `py.typed` marker and extends the Foundation-owned top-level `cybersecgpt` package path so separately distributed `cybersecgpt.*` subpackages remain discoverable. Strict downstream type checking must remain enabled rather than suppressing `import-untyped` diagnostics.
 
 ## Required checks
 
