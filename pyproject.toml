@@ -37,7 +37,7 @@ dev = [
 dev-mode-dirs = ["src"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cybersecgpt/reasoning"]
+packages = ["src/cybersecgpt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
