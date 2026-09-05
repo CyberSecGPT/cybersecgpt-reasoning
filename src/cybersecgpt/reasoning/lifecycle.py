@@ -264,7 +264,7 @@ def transition_reasoning_state(
     *,
     state: ReasoningState,
     cause: str,
-    budget_delta: ReasoningBudgetDelta = ReasoningBudgetDelta(),
+    budget_delta: ReasoningBudgetDelta | None = None,
 ) -> ReasoningLifecycleSnapshot:
     """Advance one legal state with exact sequence and bounded budget accounting."""
     if not isinstance(decision, RoutingDecision):
@@ -276,7 +276,11 @@ def transition_reasoning_state(
     if not isinstance(state, ReasoningState):
         raise ReasoningLifecycleError("state must be a ReasoningState")
     transition_cause = _require_text(cause, field_name="cause")
-    if not isinstance(budget_delta, ReasoningBudgetDelta):
+    if budget_delta is None:
+        delta = ReasoningBudgetDelta()
+    elif isinstance(budget_delta, ReasoningBudgetDelta):
+        delta = budget_delta
+    else:
         raise ReasoningLifecycleError(
             "budget_delta must be a ReasoningBudgetDelta"
         )
@@ -289,7 +293,7 @@ def transition_reasoning_state(
     next_budget_state = consume_routing_reasoning_budget(
         decision,
         snapshot.budget_state,
-        budget_delta,
+        delta,
     )
     return ReasoningLifecycleSnapshot(
         routing_decision_id=snapshot.routing_decision_id,
