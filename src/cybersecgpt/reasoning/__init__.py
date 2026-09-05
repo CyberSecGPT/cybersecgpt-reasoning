@@ -14,12 +14,16 @@ from .errors import (
     ReasoningError,
     RoutingDecisionError,
     RoutingDecisionValidationError,
+    RoutingReasoningBudgetError,
 )
 from .routing import (
     RoutingDecision,
     RoutingDecisionInvalidReason,
     RoutingDecisionReasonCode,
     RoutingDecisionValidation,
+    RoutingReasoningBudgetUsage,
+    begin_routing_reasoning_budget,
+    consume_routing_reasoning_budget,
     validate_routing_decision,
 )
 
@@ -33,6 +37,10 @@ __all__ = [
     "ReasoningBudgetUsage",
     "consume_reasoning_budget",
     "exhausted_reasoning_budget_dimensions",
+    "RoutingReasoningBudgetError",
+    "RoutingReasoningBudgetUsage",
+    "begin_routing_reasoning_budget",
+    "consume_routing_reasoning_budget",
     "RoutingDecisionError",
     "RoutingDecisionValidationError",
     "RoutingDecision",
