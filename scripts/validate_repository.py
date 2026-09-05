@@ -58,10 +58,12 @@ def _require(condition: bool, message: str) -> None:
         raise RepositoryValidationError(message)
 
 
-def _project_dependencies() -> list[str]:
+def _load_pyproject() -> dict[str, object]:
     with (ROOT / "pyproject.toml").open("rb") as stream:
-        parsed = cast(dict[str, object], tomllib.load(stream))
+        return cast(dict[str, object], tomllib.load(stream))
 
+
+def _project_dependencies(parsed: dict[str, object]) -> list[str]:
     project = parsed.get("project")
     _require(isinstance(project, dict), "pyproject project table is missing")
     project_table = cast(dict[str, object], project)
@@ -76,6 +78,26 @@ def _project_dependencies() -> list[str]:
         "project dependencies must contain strings",
     )
     return [cast(str, item) for item in dependency_list]
+
+
+def _hatch_dev_mode_dirs(parsed: dict[str, object]) -> list[str]:
+    tool = parsed.get("tool")
+    _require(isinstance(tool, dict), "pyproject tool table is missing")
+    hatch = cast(dict[str, object], tool).get("hatch")
+    _require(isinstance(hatch, dict), "pyproject tool.hatch table is missing")
+    build = cast(dict[str, object], hatch).get("build")
+    _require(isinstance(build, dict), "pyproject tool.hatch.build table is missing")
+    dev_mode_dirs = cast(dict[str, object], build).get("dev-mode-dirs")
+    _require(
+        isinstance(dev_mode_dirs, list),
+        "Hatch dev-mode-dirs must be a list",
+    )
+    values = cast(list[object], dev_mode_dirs)
+    _require(
+        all(isinstance(item, str) for item in values),
+        "Hatch dev-mode-dirs must contain strings",
+    )
+    return [cast(str, item) for item in values]
 
 
 def _text_files() -> list[Path]:
@@ -96,7 +118,8 @@ def main() -> None:
     missing = sorted(path for path in REQUIRED_FILES if not (ROOT / path).is_file())
     _require(not missing, f"required repository files are missing: {missing}")
 
-    dependencies = _project_dependencies()
+    pyproject = _load_pyproject()
+    dependencies = _project_dependencies(pyproject)
     _require(
         dependencies == ["cybersecgpt-foundation>=0.1.0,<0.2"],
         f"runtime dependency boundary changed unexpectedly: {dependencies}",
@@ -107,6 +130,12 @@ def main() -> None:
             marker in normalized_dependencies for marker in PROVIDER_DEPENDENCY_MARKERS
         ),
         "provider SDK dependency detected in core runtime dependencies",
+    )
+
+    dev_mode_dirs = _hatch_dev_mode_dirs(pyproject)
+    _require(
+        dev_mode_dirs == ["src"],
+        f"Hatch editable-install source path changed unexpectedly: {dev_mode_dirs}",
     )
 
     for path in _text_files():
