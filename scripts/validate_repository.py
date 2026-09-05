@@ -38,7 +38,10 @@ SECRET_PATTERNS = (
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
 )
 
-TEXT_SUFFIXES = frozenset({".md", ".py", ".toml", ".txt", ".yml", ".yaml"})
+TEXT_SUFFIXES = frozenset(
+    {".md", ".py", ".toml", ".txt", ".yml", ".yaml"}
+)
+TEXT_NAMES = frozenset({"LICENSE", ".gitattributes", ".gitignore"})
 PROVIDER_DEPENDENCY_MARKERS = (
     "openai",
     "anthropic",
@@ -65,7 +68,10 @@ def _project_dependencies() -> list[str]:
     _require(isinstance(project, dict), "pyproject project table is missing")
     project_table = cast(dict[str, object], project)
     dependencies = project_table.get("dependencies")
-    _require(isinstance(dependencies, list), "project dependencies must be a list")
+    _require(
+        isinstance(dependencies, list),
+        "project dependencies must be a list",
+    )
     dependency_list = cast(list[object], dependencies)
     _require(
         all(isinstance(item, str) for item in dependency_list),
@@ -79,17 +85,25 @@ def _text_files() -> list[Path]:
     for path in ROOT.rglob("*"):
         if not path.is_file():
             continue
-        if any(part.startswith(".") and part not in {".github"} for part in path.parts):
+        if any(
+            part.startswith(".") and part not in {".github"}
+            for part in path.parts
+        ):
             continue
-        if any(part in {"build", "dist", "__pycache__"} for part in path.parts):
+        if any(
+            part in {"build", "dist", "__pycache__"}
+            for part in path.parts
+        ):
             continue
-        if path.suffix in TEXT_SUFFIXES or path.name in {"LICENSE", ".gitattributes", ".gitignore"}:
+        if path.suffix in TEXT_SUFFIXES or path.name in TEXT_NAMES:
             files.append(path)
     return files
 
 
 def main() -> None:
-    missing = sorted(path for path in REQUIRED_FILES if not (ROOT / path).is_file())
+    missing = sorted(
+        path for path in REQUIRED_FILES if not (ROOT / path).is_file()
+    )
     _require(not missing, f"required repository files are missing: {missing}")
 
     dependencies = _project_dependencies()
@@ -99,7 +113,10 @@ def main() -> None:
     )
     normalized_dependencies = "\n".join(dependencies).lower()
     _require(
-        not any(marker in normalized_dependencies for marker in PROVIDER_DEPENDENCY_MARKERS),
+        not any(
+            marker in normalized_dependencies
+            for marker in PROVIDER_DEPENDENCY_MARKERS
+        ),
         "provider SDK dependency detected in core runtime dependencies",
     )
 
@@ -108,12 +125,20 @@ def main() -> None:
         for pattern in SECRET_PATTERNS:
             _require(
                 pattern.search(text) is None,
-                f"sensitive material pattern detected in {path.relative_to(ROOT)}",
+                "sensitive material pattern detected in "
+                f"{path.relative_to(ROOT)}",
             )
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    _require("Accepted ADR-0011" in readme, "README must reference Accepted ADR-0011")
-    _require("not" in readme.lower() and "authorization grant" in readme.lower(), "README must preserve the non-authorizing routing boundary")
+    _require(
+        "Accepted ADR-0011" in readme,
+        "README must reference Accepted ADR-0011",
+    )
+    _require(
+        "not" in readme.lower()
+        and "authorization grant" in readme.lower(),
+        "README must preserve the non-authorizing routing boundary",
+    )
 
     print("Reasoning repository validation passed.")
 

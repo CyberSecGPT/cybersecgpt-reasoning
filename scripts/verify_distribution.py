@@ -12,7 +12,13 @@ EXPECTED_SOURCE_MEMBERS = frozenset(
         "cybersecgpt/reasoning/routing.py",
     }
 )
-PROVIDER_MARKERS = ("openai", "anthropic", "cohere", "google-generativeai", "google-genai")
+PROVIDER_MARKERS = (
+    "openai",
+    "anthropic",
+    "cohere",
+    "google-generativeai",
+    "google-genai",
+)
 
 
 class DistributionVerificationError(RuntimeError):
@@ -27,38 +33,65 @@ def _require(condition: bool, message: str) -> None:
 def verify_wheel(path: Path) -> None:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
-        source_members = {name for name in names if name.startswith("cybersecgpt/")}
+        source_members = {
+            name for name in names if name.startswith("cybersecgpt/")
+        }
         _require(
             source_members == EXPECTED_SOURCE_MEMBERS,
             f"wheel source members are incorrect: {sorted(source_members)}",
         )
         _require(
             "cybersecgpt/__init__.py" not in names,
-            "reasoning wheel must not overwrite the Foundation-owned top-level package",
+            "reasoning wheel must not overwrite the Foundation-owned "
+            "top-level package",
         )
         _require(
-            not any(name.startswith("cybersecgpt/foundation/") for name in names),
+            not any(
+                name.startswith("cybersecgpt/foundation/") for name in names
+            ),
             "reasoning wheel must not bundle Foundation implementation",
         )
 
-        metadata_names = [name for name in names if name.endswith(".dist-info/METADATA")]
-        _require(len(metadata_names) == 1, "wheel must contain exactly one METADATA file")
-        metadata = Parser().parsestr(archive.read(metadata_names[0]).decode("utf-8"))
-        _require(metadata.get("Name") == "cybersecgpt-reasoning", "wheel Name is incorrect")
-        _require(metadata.get("Version") == "0.1.0", "wheel Version is incorrect")
-        requirements = [str(item) for item in metadata.get_all("Requires-Dist", [])]
+        metadata_names = [
+            name for name in names if name.endswith(".dist-info/METADATA")
+        ]
+        _require(
+            len(metadata_names) == 1,
+            "wheel must contain exactly one METADATA file",
+        )
+        metadata_content = archive.read(metadata_names[0]).decode("utf-8")
+        metadata = Parser().parsestr(metadata_content)
+        _require(
+            metadata.get("Name") == "cybersecgpt-reasoning",
+            "wheel Name is incorrect",
+        )
+        _require(
+            metadata.get("Version") == "0.1.0",
+            "wheel Version is incorrect",
+        )
+        requirements = [
+            str(item) for item in metadata.get_all("Requires-Dist", [])
+        ]
         foundation_requirements = [
-            item for item in requirements if item.lower().startswith("cybersecgpt-foundation")
+            item
+            for item in requirements
+            if item.lower().startswith("cybersecgpt-foundation")
         ]
         _require(
             len(foundation_requirements) == 1,
-            f"wheel must declare one Foundation runtime dependency: {requirements}",
+            "wheel must declare one Foundation runtime dependency: "
+            f"{requirements}",
         )
         runtime_requirement = foundation_requirements[0].replace(" ", "")
         _require(
-            runtime_requirement.startswith("cybersecgpt-foundation<0.2,>=0.1.0")
-            or runtime_requirement.startswith("cybersecgpt-foundation>=0.1.0,<0.2"),
-            f"Foundation dependency range is incorrect: {foundation_requirements[0]}",
+            runtime_requirement.startswith(
+                "cybersecgpt-foundation<0.2,>=0.1.0"
+            )
+            or runtime_requirement.startswith(
+                "cybersecgpt-foundation>=0.1.0,<0.2"
+            ),
+            "Foundation dependency range is incorrect: "
+            f"{foundation_requirements[0]}",
         )
         normalized = "\n".join(requirements).lower()
         _require(

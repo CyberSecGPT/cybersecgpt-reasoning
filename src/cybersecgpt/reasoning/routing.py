@@ -2,15 +2,11 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 
 from cybersecgpt.foundation import (
-    AuthorizationContextId,
-    CapabilitySnapshotId,
-    RequestId,
     RoutingDecisionId,
     RoutingSecurityBinding,
-    SecurityPolicyRevisionId,
     SubstrateId,
 )
 
@@ -25,7 +21,7 @@ __all__ = [
 ]
 
 
-class RoutingDecisionReasonCode(str, Enum):
+class RoutingDecisionReasonCode(StrEnum):
     """Structured factors allowed in the initial P5 routing contract."""
 
     CAPABILITY_MATCH = "CAPABILITY_MATCH"
@@ -41,7 +37,7 @@ class RoutingDecisionReasonCode(str, Enum):
     STALE_DECISION_REJECTED = "STALE_DECISION_REJECTED"
 
 
-class RoutingDecisionInvalidReason(str, Enum):
+class RoutingDecisionInvalidReason(StrEnum):
     """Machine-evaluable reasons that a routing decision cannot be reused."""
 
     NOT_YET_VALID = "NOT_YET_VALID"
@@ -49,7 +45,9 @@ class RoutingDecisionInvalidReason(str, Enum):
     REQUEST_MISMATCH = "REQUEST_MISMATCH"
     AUTHORIZATION_CONTEXT_MISMATCH = "AUTHORIZATION_CONTEXT_MISMATCH"
     SECURITY_POLICY_REVISION_MISMATCH = "SECURITY_POLICY_REVISION_MISMATCH"
-    EFFECTIVE_DATA_CLASSIFICATION_MISMATCH = "EFFECTIVE_DATA_CLASSIFICATION_MISMATCH"
+    EFFECTIVE_DATA_CLASSIFICATION_MISMATCH = (
+        "EFFECTIVE_DATA_CLASSIFICATION_MISMATCH"
+    )
     PROVIDER_NETWORK_POLICY_MISMATCH = "PROVIDER_NETWORK_POLICY_MISMATCH"
     OFFLINE_REQUIREMENT_MISMATCH = "OFFLINE_REQUIREMENT_MISMATCH"
     CAPABILITY_SNAPSHOT_MISMATCH = "CAPABILITY_SNAPSHOT_MISMATCH"
@@ -104,7 +102,10 @@ class RoutingDecision:
             )
 
         _require_text(self.router_policy_id, field_name="router_policy_id")
-        _require_text(self.router_policy_version, field_name="router_policy_version")
+        _require_text(
+            self.router_policy_version,
+            field_name="router_policy_version",
+        )
 
         if not isinstance(self.selected_substrates, tuple):
             raise RoutingDecisionError("selected_substrates must be a tuple")
@@ -118,7 +119,9 @@ class RoutingDecision:
                 "selected_substrates must contain only SubstrateId values"
             )
         if len(set(self.selected_substrates)) != len(self.selected_substrates):
-            raise RoutingDecisionError("selected_substrates must not contain duplicates")
+            raise RoutingDecisionError(
+                "selected_substrates must not contain duplicates"
+            )
 
         if not isinstance(self.reason_codes, tuple):
             raise RoutingDecisionError("reason_codes must be a tuple")
@@ -170,7 +173,9 @@ class RoutingDecisionValidation:
         if not isinstance(self.valid, bool):
             raise RoutingDecisionValidationError("valid must be a bool")
         if not isinstance(self.invalid_reasons, tuple):
-            raise RoutingDecisionValidationError("invalid_reasons must be a tuple")
+            raise RoutingDecisionValidationError(
+                "invalid_reasons must be a tuple"
+            )
         if not all(
             isinstance(reason, RoutingDecisionInvalidReason)
             for reason in self.invalid_reasons
@@ -200,7 +205,9 @@ def validate_routing_decision(
     authorize a target, consume a grant, or permit a side effect.
     """
     if not isinstance(decision, RoutingDecision):
-        raise RoutingDecisionValidationError("decision must be a RoutingDecision")
+        raise RoutingDecisionValidationError(
+            "decision must be a RoutingDecision"
+        )
     if not isinstance(current_binding, RoutingSecurityBinding):
         raise RoutingDecisionValidationError(
             "current_binding must be a RoutingSecurityBinding"
@@ -221,7 +228,10 @@ def validate_routing_decision(
     admitted = decision.security_binding
     if current_binding.request_id != admitted.request_id:
         invalid_reasons.append(RoutingDecisionInvalidReason.REQUEST_MISMATCH)
-    if current_binding.authorization_context_id != admitted.authorization_context_id:
+    if (
+        current_binding.authorization_context_id
+        != admitted.authorization_context_id
+    ):
         invalid_reasons.append(
             RoutingDecisionInvalidReason.AUTHORIZATION_CONTEXT_MISMATCH
         )
@@ -239,7 +249,10 @@ def validate_routing_decision(
         invalid_reasons.append(
             RoutingDecisionInvalidReason.EFFECTIVE_DATA_CLASSIFICATION_MISMATCH
         )
-    if current_binding.provider_network_policy != admitted.provider_network_policy:
+    if (
+        current_binding.provider_network_policy
+        != admitted.provider_network_policy
+    ):
         invalid_reasons.append(
             RoutingDecisionInvalidReason.PROVIDER_NETWORK_POLICY_MISMATCH
         )
@@ -247,7 +260,10 @@ def validate_routing_decision(
         invalid_reasons.append(
             RoutingDecisionInvalidReason.OFFLINE_REQUIREMENT_MISMATCH
         )
-    if current_binding.capability_snapshot_id != admitted.capability_snapshot_id:
+    if (
+        current_binding.capability_snapshot_id
+        != admitted.capability_snapshot_id
+    ):
         invalid_reasons.append(
             RoutingDecisionInvalidReason.CAPABILITY_SNAPSHOT_MISMATCH
         )

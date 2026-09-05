@@ -1,7 +1,7 @@
 """Tests for P5 structured routing decisions and freshness validation."""
 
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import cast
 
 import pytest
@@ -15,6 +15,7 @@ from cybersecgpt.foundation import (
     SecurityPolicyRevisionId,
     SubstrateId,
 )
+
 from cybersecgpt.reasoning import (
     RoutingDecision,
     RoutingDecisionError,
@@ -25,7 +26,7 @@ from cybersecgpt.reasoning import (
     validate_routing_decision,
 )
 
-CREATED_AT = datetime(2026, 9, 5, 12, 0, tzinfo=timezone.utc)
+CREATED_AT = datetime(2026, 9, 5, 12, 0, tzinfo=UTC)
 EXPIRES_AT = CREATED_AT + timedelta(minutes=5)
 
 
@@ -87,15 +88,27 @@ def test_routing_decision_is_immutable() -> None:
         ("router_policy_id", "", "router_policy_id"),
         ("router_policy_id", " router", "router_policy_id"),
         ("router_policy_version", "", "router_policy_version"),
-        ("selected_substrates", [SubstrateId("one")], "selected_substrates"),
+        (
+            "selected_substrates",
+            [SubstrateId("one")],
+            "selected_substrates",
+        ),
         ("selected_substrates", (), "selected_substrates"),
-        ("selected_substrates", (RequestId("wrong"),), "selected_substrates"),
+        (
+            "selected_substrates",
+            (RequestId("wrong"),),
+            "selected_substrates",
+        ),
         (
             "selected_substrates",
             (SubstrateId("one"), SubstrateId("one")),
             "duplicates",
         ),
-        ("reason_codes", [RoutingDecisionReasonCode.CAPABILITY_MATCH], "reason_codes"),
+        (
+            "reason_codes",
+            [RoutingDecisionReasonCode.CAPABILITY_MATCH],
+            "reason_codes",
+        ),
         ("reason_codes", (), "reason_codes"),
         ("reason_codes", ("CAPABILITY_MATCH",), "reason_codes"),
         (
@@ -110,12 +123,23 @@ def test_routing_decision_is_immutable() -> None:
         ("created_at", datetime(2026, 9, 5, 12, 0), "created_at"),
         (
             "created_at",
-            datetime(2026, 9, 5, 12, 0, tzinfo=timezone(timedelta(hours=1))),
+            datetime(
+                2026,
+                9,
+                5,
+                12,
+                0,
+                tzinfo=timezone(timedelta(hours=1)),
+            ),
             "created_at",
         ),
         ("expires_at", datetime(2026, 9, 5, 12, 5), "expires_at"),
         ("expires_at", CREATED_AT, "later than"),
-        ("expires_at", CREATED_AT - timedelta(seconds=1), "later than"),
+        (
+            "expires_at",
+            CREATED_AT - timedelta(seconds=1),
+            "later than",
+        ),
     ],
 )
 def test_routing_decision_rejects_invalid_fields(
@@ -130,13 +154,24 @@ def test_routing_decision_rejects_invalid_fields(
 @pytest.mark.parametrize(
     ("override", "expected"),
     [
-        ({"request_id": RequestId("request-2")}, RoutingDecisionInvalidReason.REQUEST_MISMATCH),
         (
-            {"authorization_context_id": AuthorizationContextId("authorization-2")},
+            {"request_id": RequestId("request-2")},
+            RoutingDecisionInvalidReason.REQUEST_MISMATCH,
+        ),
+        (
+            {
+                "authorization_context_id": AuthorizationContextId(
+                    "authorization-2"
+                )
+            },
             RoutingDecisionInvalidReason.AUTHORIZATION_CONTEXT_MISMATCH,
         ),
         (
-            {"security_policy_revision_id": SecurityPolicyRevisionId("policy-8")},
+            {
+                "security_policy_revision_id": SecurityPolicyRevisionId(
+                    "policy-8"
+                )
+            },
             RoutingDecisionInvalidReason.SECURITY_POLICY_REVISION_MISMATCH,
         ),
         (
@@ -152,7 +187,11 @@ def test_routing_decision_rejects_invalid_fields(
             RoutingDecisionInvalidReason.OFFLINE_REQUIREMENT_MISMATCH,
         ),
         (
-            {"capability_snapshot_id": CapabilitySnapshotId("capabilities-5")},
+            {
+                "capability_snapshot_id": CapabilitySnapshotId(
+                    "capabilities-5"
+                )
+            },
             RoutingDecisionInvalidReason.CAPABILITY_SNAPSHOT_MISMATCH,
         ),
     ],
@@ -196,7 +235,10 @@ def test_validation_reports_multiple_mismatches_in_stable_order() -> None:
     )
 
 
-@pytest.mark.parametrize("now", [EXPIRES_AT, EXPIRES_AT + timedelta(seconds=1)])
+@pytest.mark.parametrize(
+    "now",
+    [EXPIRES_AT, EXPIRES_AT + timedelta(seconds=1)],
+)
 def test_validation_rejects_expired_decision(now: datetime) -> None:
     decision = make_decision()
 
@@ -218,7 +260,9 @@ def test_validation_rejects_not_yet_valid_decision() -> None:
         now=CREATED_AT - timedelta(microseconds=1),
     )
 
-    assert result.invalid_reasons == (RoutingDecisionInvalidReason.NOT_YET_VALID,)
+    assert result.invalid_reasons == (
+        RoutingDecisionInvalidReason.NOT_YET_VALID,
+    )
 
 
 @pytest.mark.parametrize(
@@ -227,11 +271,23 @@ def test_validation_rejects_not_yet_valid_decision() -> None:
         ("decision", make_binding(), CREATED_AT, "decision"),
         (make_decision(), "binding", CREATED_AT, "current_binding"),
         (make_decision(), make_binding(), "now", "now"),
-        (make_decision(), make_binding(), datetime(2026, 9, 5, 12, 0), "now"),
         (
             make_decision(),
             make_binding(),
-            datetime(2026, 9, 5, 12, 0, tzinfo=timezone(timedelta(hours=1))),
+            datetime(2026, 9, 5, 12, 0),
+            "now",
+        ),
+        (
+            make_decision(),
+            make_binding(),
+            datetime(
+                2026,
+                9,
+                5,
+                12,
+                0,
+                tzinfo=timezone(timedelta(hours=1)),
+            ),
             "now",
         ),
     ],
@@ -267,10 +323,16 @@ def test_validation_result_is_immutable() -> None:
     [
         ({"decision_id": "route-1"}, "decision_id"),
         ({"validated_at": "now"}, "validated_at"),
-        ({"validated_at": datetime(2026, 9, 5, 12, 0)}, "validated_at"),
+        (
+            {"validated_at": datetime(2026, 9, 5, 12, 0)},
+            "validated_at",
+        ),
         ({"valid": 1}, "valid"),
         ({"invalid_reasons": []}, "invalid_reasons"),
-        ({"invalid_reasons": ("EXPIRED",), "valid": False}, "invalid_reasons"),
+        (
+            {"invalid_reasons": ("EXPIRED",), "valid": False},
+            "invalid_reasons",
+        ),
         (
             {
                 "invalid_reasons": (
