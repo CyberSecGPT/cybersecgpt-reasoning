@@ -218,6 +218,4 @@ def test_budget_functions_reject_wrong_input_types() -> None:
             cast(ReasoningBudgetDelta, "delta"),
         )
     with pytest.raises(ReasoningBudgetError, match="usage"):
-        exhausted_reasoning_budget_dimensions(
-            cast(ReasoningBudgetUsage, "usage")
-        )
+        exhausted_reasoning_budget_dimensions(cast(ReasoningBudgetUsage, "usage"))
