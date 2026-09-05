@@ -145,13 +145,9 @@ class BrainRequest:
         if not isinstance(self.correlation_id, CorrelationId):
             raise BrainRequestError("correlation_id must be a CorrelationId")
         if not isinstance(self.security_binding, RoutingSecurityBinding):
-            raise BrainRequestError(
-                "security_binding must be a RoutingSecurityBinding"
-            )
+            raise BrainRequestError("security_binding must be a RoutingSecurityBinding")
         if self.security_binding.request_id != self.request_id:
-            raise BrainRequestError(
-                "security_binding request_id must match request_id"
-            )
+            raise BrainRequestError("security_binding request_id must match request_id")
 
         _require_token(self.task_type, field_name="task_type")
         _require_token(self.domain, field_name="domain")
