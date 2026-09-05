@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
 
 ## Dependency direction
 
@@ -18,6 +18,29 @@ cybersecgpt-foundation
 ```
 
 The dependency is one-way. Foundation must not depend on Reasoning. Reasoning must not import provider SDKs, application layers, tool executors, security-policy implementations, model runtimes, or persistent memory implementations into its core package.
+
+## Normalized request admission
+
+`BrainRequest` is the immutable Reasoning-side normalized envelope used before routing consideration. It reuses Foundation-owned cross-domain identifiers and security bindings rather than inventing duplicate request/security identity types.
+
+The request contains:
+
+- Foundation `RequestId` and `CorrelationId`;
+- one Foundation `RoutingSecurityBinding` whose request identity must match the envelope;
+- validated machine-evaluable `task_type`, `domain`, `task_complexity`, and `safety_impact` tokens;
+- optional source/claimed data-classification metadata kept distinct from the authoritative effective classification inside `RoutingSecurityBinding`;
+- an optional opaque identity-context reference;
+- non-negative latency, compute, and memory ceilings;
+- one immutable `ReasoningBudget` for reasoning/model/tool/retrieval/verifier accounting;
+- accuracy, determinism, explainability, and verification requirements;
+- UTC admission and optional deadline timestamps; and
+- bounded canonical JSON task input.
+
+`admit_brain_request` accepts raw JSON-compatible input and uses Foundation's defensive JSON serializer to enforce payload, nesting, container, key, string, and node safety bounds before storing only the canonical immutable JSON representation. Direct construction also validates that supplied `input_json` is valid and canonical, preventing mutable Python containers or ambiguous serialized representations from becoming internal request state.
+
+Admission is structural control, not security-policy evaluation. It requires an already-authoritative `RoutingSecurityBinding`; it does not authenticate an actor, mint or validate a grant, evaluate target scope, derive effective data classification, widen provider/network permissions, or authorize a side effect. Source-provided classification is retained only as untrusted metadata and is never copied into the authoritative effective-classification field by this layer.
+
+The envelope carries compute/memory/latency ceilings for later routing and runtime enforcement. This slice does not itself implement device-resource enforcement, cancellation propagation, or runtime deadline clocks; generic execution primitives remain owned by `cybersecgpt-runtime` under ADR-0011.
 
 ## Routing-decision contract
 
@@ -119,8 +142,8 @@ Terminal `CANCELLED` prevents further lifecycle transitions. This slice does not
 
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
 
 ## Future P5 slices
 
-Later P5 work may add normalized request admission, validated substrate discovery, deterministic candidate selection, cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+Later P5 work may add validated substrate discovery, deterministic candidate selection, cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
