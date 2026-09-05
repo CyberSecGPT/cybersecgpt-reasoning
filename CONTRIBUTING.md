@@ -6,9 +6,9 @@ Changes must conform to Accepted ADR-0011 and the Native Brain conformance profi
 
 ## Development setup
 
-CI uses the verified Foundation baseline at commit `6f892bb7a4bddd07cfd7acdae7a925971006208d`.
+CI uses the verified typed Foundation baseline at commit `30a5c23f47b63ab0196fb4c40378b127d51acf36`.
 
-For local development, install that Foundation revision first, then install this repository with its `dev` extra.
+For local development, install that Foundation revision first, then install this repository with its `dev` extra. The Foundation distribution publishes the PEP 561 `py.typed` marker, so strict downstream type checking must remain enabled rather than suppressing `import-untyped` diagnostics.
 
 ## Required checks
 
