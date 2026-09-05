@@ -8,6 +8,7 @@ import pytest
 from cybersecgpt.foundation import (
     AuthorizationContextId,
     CapabilitySnapshotId,
+    CorrelationId,
     RequestId,
     RoutingDecisionId,
     RoutingSecurityBinding,
@@ -32,6 +33,7 @@ from cybersecgpt.reasoning import (
 )
 
 CREATED_AT = datetime(2026, 9, 5, 12, 0, tzinfo=UTC)
+CORRELATION_ID = CorrelationId("correlation-1")
 
 
 def make_budget(**overrides: object) -> ReasoningBudget:
@@ -78,7 +80,7 @@ def make_initial_snapshot(**overrides: object) -> ReasoningLifecycleSnapshot:
     decision = make_decision()
     state = begin_reasoning_lifecycle(
         decision,
-        correlation_id="correlation-1",
+        correlation_id=CORRELATION_ID,
     )
     values: dict[str, object] = {
         "routing_decision_id": state.routing_decision_id,
@@ -97,12 +99,12 @@ def test_begin_lifecycle_creates_immutable_admitted_snapshot() -> None:
     decision = make_decision()
     snapshot = begin_reasoning_lifecycle(
         decision,
-        correlation_id="correlation-1",
+        correlation_id=CORRELATION_ID,
         cause="request admitted",
     )
 
     assert snapshot.routing_decision_id == decision.decision_id
-    assert snapshot.correlation_id == "correlation-1"
+    assert snapshot.correlation_id == CORRELATION_ID
     assert snapshot.sequence == 0
     assert snapshot.previous_state is None
     assert snapshot.state is ReasoningState.ADMITTED
@@ -130,7 +132,7 @@ def test_reasoning_state_terminal_property() -> None:
 
 def test_lifecycle_progresses_with_exact_sequence_and_budget_snapshots() -> None:
     decision = make_decision()
-    admitted = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    admitted = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
     planning = transition_reasoning_state(
         decision,
         admitted,
@@ -173,7 +175,7 @@ def test_lifecycle_progresses_with_exact_sequence_and_budget_snapshots() -> None
     assert verifying.sequence == 4
     assert completed.sequence == 5
     assert completed.previous_state is ReasoningState.VERIFYING
-    assert completed.correlation_id == "correlation-1"
+    assert completed.correlation_id == CORRELATION_ID
     assert completed.budget_state.usage.steps == 4
     assert completed.budget_state.usage.tool_calls == 1
     assert completed.budget_state.usage.verifier_passes == 1
@@ -194,7 +196,7 @@ def test_terminal_state_occurs_once_and_rejects_further_transition(
     terminal_state: ReasoningState,
 ) -> None:
     decision = make_decision()
-    snapshot = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    snapshot = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
     if terminal_state is ReasoningState.COMPLETED:
         snapshot = transition_reasoning_state(
             decision,
@@ -220,7 +222,7 @@ def test_terminal_state_occurs_once_and_rejects_further_transition(
 
 def test_tool_execution_state_requires_awaiting_policy() -> None:
     decision = make_decision()
-    admitted = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    admitted = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
     planning = transition_reasoning_state(
         decision,
         admitted,
@@ -241,7 +243,7 @@ def test_admitted_cannot_be_reentered() -> None:
     decision = make_decision()
     planning = transition_reasoning_state(
         decision,
-        begin_reasoning_lifecycle(decision, correlation_id="correlation-1"),
+        begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID),
         state=ReasoningState.PLANNING,
         cause="plan",
     )
@@ -257,7 +259,7 @@ def test_admitted_cannot_be_reentered() -> None:
 
 def test_transition_fails_closed_on_budget_exhaustion() -> None:
     decision = make_decision(reasoning_budget=make_budget(max_steps=0))
-    admitted = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    admitted = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
 
     with pytest.raises(ReasoningBudgetExceededError):
         transition_reasoning_state(
@@ -274,7 +276,7 @@ def test_transition_fails_closed_on_budget_exhaustion() -> None:
 
 def test_transition_rejects_substituted_routing_budget_state() -> None:
     decision = make_decision(reasoning_budget=make_budget(max_steps=2))
-    admitted = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    admitted = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
     forged_budget_state = RoutingReasoningBudgetUsage(
         decision_id=decision.decision_id,
         usage=ReasoningBudgetUsage(budget=make_budget(max_steps=9)),
@@ -302,9 +304,8 @@ def test_transition_rejects_substituted_routing_budget_state() -> None:
     ("overrides", "message"),
     [
         ({"routing_decision_id": "route-1"}, "routing_decision_id"),
+        ({"correlation_id": "correlation-1"}, "correlation_id"),
         ({"correlation_id": 7}, "correlation_id"),
-        ({"correlation_id": ""}, "correlation_id"),
-        ({"correlation_id": " correlation-1"}, "correlation_id"),
         ({"sequence": True}, "sequence"),
         ({"sequence": -1}, "sequence"),
         ({"state": "ADMITTED"}, "state"),
@@ -377,12 +378,11 @@ def test_direct_non_initial_snapshot_accepts_valid_transition() -> None:
 @pytest.mark.parametrize(
     ("decision", "correlation_id", "cause", "message"),
     [
-        ("decision", "correlation-1", "admitted", "decision"),
+        ("decision", CORRELATION_ID, "admitted", "decision"),
+        (make_decision(), "correlation-1", "admitted", "correlation_id"),
         (make_decision(), 7, "admitted", "correlation_id"),
-        (make_decision(), "", "admitted", "correlation_id"),
-        (make_decision(), " correlation-1", "admitted", "correlation_id"),
-        (make_decision(), "correlation-1", 7, "cause"),
-        (make_decision(), "correlation-1", "", "cause"),
+        (make_decision(), CORRELATION_ID, 7, "cause"),
+        (make_decision(), CORRELATION_ID, "", "cause"),
     ],
 )
 def test_begin_lifecycle_rejects_invalid_inputs(
@@ -394,14 +394,14 @@ def test_begin_lifecycle_rejects_invalid_inputs(
     with pytest.raises(ReasoningLifecycleError, match=message):
         begin_reasoning_lifecycle(
             cast(RoutingDecision, decision),
-            correlation_id=cast(str, correlation_id),
+            correlation_id=cast(CorrelationId, correlation_id),
             cause=cast(str, cause),
         )
 
 
 def test_transition_rejects_invalid_inputs_and_decision_mismatch() -> None:
     decision = make_decision()
-    snapshot = begin_reasoning_lifecycle(decision, correlation_id="correlation-1")
+    snapshot = begin_reasoning_lifecycle(decision, correlation_id=CORRELATION_ID)
 
     with pytest.raises(ReasoningLifecycleError, match="decision"):
         transition_reasoning_state(

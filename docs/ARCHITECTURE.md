@@ -101,7 +101,7 @@ FAILED
 CANCELLED
 ```
 
-`ReasoningLifecycleSnapshot` is an immutable control snapshot carrying routing-decision identity, a Reasoning-local validated correlation identifier, monotonic sequence, previous/current state, a caller-safe cause, and a `RoutingReasoningBudgetUsage` snapshot. Correlation identity remains a validated string in this slice because Foundation does not currently publish a cross-domain correlation-ID primitive; this avoids creating a premature Foundation contract solely for a conceptual field.
+`ReasoningLifecycleSnapshot` is an immutable control snapshot carrying routing-decision identity, Foundation `CorrelationId`, monotonic sequence, previous/current state, a caller-safe cause, and a `RoutingReasoningBudgetUsage` snapshot. Using Foundation's shared identifier preserves one cross-domain correlation contract across Reasoning and other CyberSecGPT components instead of introducing a duplicate local identifier representation.
 
 `begin_reasoning_lifecycle` creates only `ADMITTED` at sequence zero. Every transition produced by `transition_reasoning_state` increments sequence by exactly one and applies its `ReasoningBudgetDelta` through the routing-bound budget consumer before returning a new immutable snapshot.
 

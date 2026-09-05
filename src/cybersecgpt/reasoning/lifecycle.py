@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from cybersecgpt.foundation import RoutingDecisionId
+from cybersecgpt.foundation import CorrelationId, RoutingDecisionId
 
 from .budget import ReasoningBudgetDelta
 from .errors import ReasoningLifecycleError
@@ -190,7 +190,7 @@ class ReasoningLifecycleSnapshot:
     """
 
     routing_decision_id: RoutingDecisionId
-    correlation_id: str
+    correlation_id: CorrelationId
     sequence: int
     previous_state: ReasoningState | None
     state: ReasoningState
@@ -202,7 +202,8 @@ class ReasoningLifecycleSnapshot:
             raise ReasoningLifecycleError(
                 "routing_decision_id must be a RoutingDecisionId"
             )
-        _require_text(self.correlation_id, field_name="correlation_id")
+        if not isinstance(self.correlation_id, CorrelationId):
+            raise ReasoningLifecycleError("correlation_id must be a CorrelationId")
         sequence = _require_sequence(self.sequence)
         if not isinstance(self.state, ReasoningState):
             raise ReasoningLifecycleError("state must be a ReasoningState")
@@ -239,17 +240,18 @@ class ReasoningLifecycleSnapshot:
 def begin_reasoning_lifecycle(
     decision: RoutingDecision,
     *,
-    correlation_id: str,
+    correlation_id: CorrelationId,
     cause: str = "admitted",
 ) -> ReasoningLifecycleSnapshot:
     """Create the initial ADMITTED lifecycle snapshot for one routing decision."""
     if not isinstance(decision, RoutingDecision):
         raise ReasoningLifecycleError("decision must be a RoutingDecision")
-    correlation = _require_text(correlation_id, field_name="correlation_id")
+    if not isinstance(correlation_id, CorrelationId):
+        raise ReasoningLifecycleError("correlation_id must be a CorrelationId")
     initial_cause = _require_text(cause, field_name="cause")
     return ReasoningLifecycleSnapshot(
         routing_decision_id=decision.decision_id,
-        correlation_id=correlation,
+        correlation_id=correlation_id,
         sequence=0,
         previous_state=None,
         state=ReasoningState.ADMITTED,
