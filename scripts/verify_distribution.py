@@ -13,6 +13,7 @@ EXPECTED_SOURCE_MEMBERS = frozenset(
         "cybersecgpt/reasoning/lifecycle.py",
         "cybersecgpt/reasoning/request.py",
         "cybersecgpt/reasoning/routing.py",
+        "cybersecgpt/reasoning/substrates.py",
     }
 )
 PROVIDER_MARKERS = (

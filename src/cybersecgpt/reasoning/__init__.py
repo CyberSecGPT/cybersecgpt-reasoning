@@ -17,6 +17,7 @@ from .errors import (
     RoutingDecisionError,
     RoutingDecisionValidationError,
     RoutingReasoningBudgetError,
+    SubstrateDiscoveryError,
 )
 from .lifecycle import (
     ReasoningLifecycleSnapshot,
@@ -35,12 +36,35 @@ from .routing import (
     consume_routing_reasoning_budget,
     validate_routing_decision,
 )
+from .substrates import (
+    CapabilitySnapshot,
+    SubstrateAvailabilityState,
+    SubstrateDescriptor,
+    SubstrateKind,
+    SubstrateProvenance,
+    SubstrateResourceProfile,
+    SubstrateValidationEvidence,
+    ValidatedSubstrate,
+    build_capability_snapshot,
+    validate_substrate_descriptor,
+)
 
 __all__ = [
     "ReasoningError",
     "BrainRequestError",
     "BrainRequest",
     "admit_brain_request",
+    "SubstrateDiscoveryError",
+    "SubstrateKind",
+    "SubstrateAvailabilityState",
+    "SubstrateResourceProfile",
+    "SubstrateProvenance",
+    "SubstrateDescriptor",
+    "SubstrateValidationEvidence",
+    "ValidatedSubstrate",
+    "CapabilitySnapshot",
+    "validate_substrate_descriptor",
+    "build_capability_snapshot",
     "ReasoningBudgetError",
     "ReasoningBudgetExceededError",
     "ReasoningBudget",

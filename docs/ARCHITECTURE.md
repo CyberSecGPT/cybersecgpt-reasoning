@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
 
 ## Dependency direction
 
@@ -41,6 +41,56 @@ The request contains:
 Admission is structural control, not security-policy evaluation. It requires an already-authoritative `RoutingSecurityBinding`; it does not authenticate an actor, mint or validate a grant, evaluate target scope, derive effective data classification, widen provider/network permissions, or authorize a side effect. Source-provided classification is retained only as untrusted metadata and is never copied into the authoritative effective-classification field by this layer.
 
 The envelope carries compute/memory/latency ceilings for later routing and runtime enforcement. This slice does not itself implement device-resource enforcement, cancellation propagation, or runtime deadline clocks; generic execution primitives remain owned by `cybersecgpt-runtime` under ADR-0011.
+
+## Validated substrate discovery
+
+`SubstrateDescriptor` represents immutable machine-evaluable metadata for one routable intelligence substrate. It deliberately describes capability without proving that the descriptor is trusted. The descriptor uses Foundation `SubstrateId` and contains:
+
+- immutable substrate version and approved `SubstrateKind`;
+- authoritative owner reference;
+- explicit supported capability tokens;
+- offline capability and explicit network-requirement classes;
+- determinism and data-handling profiles;
+- bounded `SubstrateResourceProfile` metadata;
+- authorization and verification requirement tokens;
+- explicit `SubstrateAvailabilityState`;
+- source, build, artifact, and integrity references in `SubstrateProvenance`.
+
+Supported discovery kinds mirror the P5 conceptual routable classes: native model, retrieval, classical ML, domain rule/schema engine, symbolic, graph, tool, memory, verifier, and another explicitly approved routable class. The authoritative security-policy/authorization evaluator has no corresponding descriptor kind and remains outside this registry.
+
+`SubstrateAvailabilityState` preserves `AVAILABLE`, `DEGRADED`, `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` as metadata. Discovery does not convert these states into route selection; deterministic candidate selection remains a later P5 slice.
+
+### Validation boundary
+
+Self-described capability metadata is insufficient for routing. A descriptor must be paired with independent `SubstrateValidationEvidence` from trusted owning boundaries. The evidence records whether the following checks completed successfully:
+
+1. metadata source trust;
+2. substrate identity;
+3. immutable version;
+4. artifact/metadata integrity;
+5. compatibility; and
+6. applicable external policy constraints.
+
+The evidence also carries an authority reference, one or more opaque evidence references, a UTC validation time, and an explicit validity deadline. The Reasoning package does not perform identity authentication, artifact-signature verification, or authoritative policy evaluation itself. It consumes those completed facts as structured input and fails closed when any required check is false.
+
+`validate_substrate_descriptor` creates `ValidatedSubstrate` only when all required validation facts are true and the evidence is current at the supplied observation time. Evidence that is not yet valid or has reached its expiry is rejected.
+
+### Capability snapshots
+
+`CapabilitySnapshot` binds the validated discovery set to Foundation `CapabilitySnapshotId`, which is the same cross-domain identity already carried by `RoutingSecurityBinding` and routing-decision freshness checks.
+
+A snapshot is immutable and deterministic:
+
+- zero substrates is a valid explicit discovery result;
+- every non-empty member must be a `ValidatedSubstrate`;
+- substrate identities must be unique within the snapshot;
+- members are ordered deterministically by `SubstrateId`;
+- validation evidence is rechecked against snapshot creation time; and
+- stale evidence prevents snapshot construction.
+
+`build_capability_snapshot` accepts descriptor/evidence pairs, validates them at snapshot creation time, sorts the resulting members deterministically, and then constructs the snapshot. This keeps untrusted self-description separate from validated discovery state and gives later routing a versioned capability set without silently inferring unknown capability.
+
+A validated descriptor or snapshot is control metadata, not permission. It does not authenticate authorization, widen target scope, lower effective data classification, change provider/network policy, authorize a tool, or replace the authoritative security-policy evaluator. Later routing must still consume the request's current authoritative security binding and bind its decision to the exact capability snapshot identity.
 
 ## Routing-decision contract
 
@@ -142,8 +192,8 @@ Terminal `CANCELLED` prevents further lifecycle transitions. This slice does not
 
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
 
 ## Future P5 slices
 
-Later P5 work may add validated substrate discovery, deterministic candidate selection, cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+Later P5 work may add deterministic candidate selection, cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
