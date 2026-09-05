@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — routing validity and bounded reasoning-control slices.**
+**P5 executable bootstrap — routing validity, bounded reasoning budgets, and routing-budget binding.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -31,7 +31,13 @@ A routing decision is **not** an authorization grant. The validator only proves 
 - fail-closed `ReasoningBudgetExceededError` when any proposed consumption crosses a ceiling;
 - explicit stop-condition labels without requiring private chain-of-thought.
 
-Budget values are control metadata and do not create permission. A budget cannot be mutated or enlarged by the consumption API. Any future increase must be admitted through a fresh authorized routing decision when the routing/budget integration slice is implemented; this slice intentionally does not mint or evaluate authorization.
+Budget values are control metadata and do not create permission. A budget cannot be mutated or enlarged by the generic consumption API.
+
+### Routing-budget binding
+
+Every admitted `RoutingDecision` carries one immutable `ReasoningBudget`. `begin_routing_reasoning_budget` creates a zero-usage ledger bound to that routing-decision identity and admitted budget. `consume_routing_reasoning_budget` refuses cross-decision ledger reuse and refuses substitution of a different budget under the same decision before delegating to the monotonic budget accounting layer.
+
+A larger budget therefore requires a fresh routing decision before the routing-bound consumption path will accept it. This binding still does **not** authenticate authorization or make the router an authorizer; authoritative policy and authorization remain outside this repository.
 
 ## Native independence
 
