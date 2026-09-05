@@ -3,6 +3,7 @@
 __all__ = [
     "ReasoningError",
     "ReasoningBudgetError",
+    "RoutingReasoningBudgetError",
     "RoutingDecisionError",
     "RoutingDecisionValidationError",
 ]
@@ -14,6 +15,10 @@ class ReasoningError(Exception):
 
 class ReasoningBudgetError(ReasoningError):
     """Report an invalid reasoning-budget value or operation."""
+
+
+class RoutingReasoningBudgetError(ReasoningBudgetError):
+    """Report an invalid routing-to-reasoning-budget binding or operation."""
 
 
 class RoutingDecisionError(ReasoningError):
