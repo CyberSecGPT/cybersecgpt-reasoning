@@ -48,7 +48,7 @@ def _require_text(value: object, *, field_name: str) -> str:
 
 
 def _require_non_negative_int(value: object, *, field_name: str) -> int:
-    if type(value) is not int or value < 0:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
         raise ReasoningBudgetError(f"{field_name} must be a non-negative integer")
     return value
 
@@ -87,7 +87,11 @@ class ReasoningBudget:
     def __post_init__(self) -> None:
         _require_text(self.policy_name, field_name="policy_name")
         for field_name in _COUNTER_FIELDS:
-            _require_non_negative_int(getattr(self, f"max_{field_name}"), field_name=f"max_{field_name}")
+            maximum_field_name = f"max_{field_name}"
+            _require_non_negative_int(
+                getattr(self, maximum_field_name),
+                field_name=maximum_field_name,
+            )
         _require_stop_conditions(self.stop_conditions)
 
 
@@ -182,7 +186,7 @@ def consume_reasoning_budget(
     if not isinstance(delta, ReasoningBudgetDelta):
         raise ReasoningBudgetError("delta must be a ReasoningBudgetDelta")
 
-    values = {
+    values: dict[str, int] = {
         field_name: getattr(usage, field_name) + getattr(delta, field_name)
         for field_name in _COUNTER_FIELDS
     }
@@ -196,4 +200,13 @@ def consume_reasoning_budget(
     if exceeded:
         raise ReasoningBudgetExceededError(exceeded)
 
-    return ReasoningBudgetUsage(budget=usage.budget, **values)
+    return ReasoningBudgetUsage(
+        budget=usage.budget,
+        candidates=values["candidates"],
+        branch_depth=values["branch_depth"],
+        steps=values["steps"],
+        model_tokens=values["model_tokens"],
+        tool_calls=values["tool_calls"],
+        retrieval_calls=values["retrieval_calls"],
+        verifier_passes=values["verifier_passes"],
+    )
