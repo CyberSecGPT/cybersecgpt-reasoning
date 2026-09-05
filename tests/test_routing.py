@@ -84,6 +84,7 @@ def test_routing_decision_is_immutable() -> None:
     [
         ("decision_id", "route-1", "decision_id"),
         ("security_binding", "binding", "security_binding"),
+        ("router_policy_id", 7, "router_policy_id"),
         ("router_policy_id", "", "router_policy_id"),
         ("router_policy_id", " router", "router_policy_id"),
         ("router_policy_version", "", "router_policy_version"),
