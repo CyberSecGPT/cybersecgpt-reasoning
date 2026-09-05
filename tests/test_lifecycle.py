@@ -340,7 +340,11 @@ def test_snapshot_rejects_budget_decision_mismatch() -> None:
         (None, ReasoningState.PLANNING, "previous_state"),
         ("PLANNING", ReasoningState.VERIFYING, "previous_state"),
         (ReasoningState.PLANNING, ReasoningState.ADMITTED, "ADMITTED"),
-        (ReasoningState.PLANNING, ReasoningState.EXECUTING_AUTHORIZED_TOOL, "not allowed"),
+        (
+            ReasoningState.PLANNING,
+            ReasoningState.EXECUTING_AUTHORIZED_TOOL,
+            "not allowed",
+        ),
         (ReasoningState.COMPLETED, ReasoningState.PLANNING, "terminal"),
     ],
 )
