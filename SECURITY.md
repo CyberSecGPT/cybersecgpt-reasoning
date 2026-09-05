@@ -14,6 +14,8 @@
 - keep core runtime dependencies free of provider SDKs;
 - enforce immutable reasoning ceilings with monotonic consumption accounting;
 - fail closed when proposed reasoning consumption crosses any admitted ceiling;
+- bind routing-integrated budget usage to both routing-decision identity and the decision's immutable admitted budget;
+- reject cross-decision budget-ledger reuse and same-decision budget substitution;
 - never treat candidate agreement, remaining budget, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
