@@ -33,6 +33,9 @@ dev = [
   "build>=1.2,<2",
 ]
 
+[tool.hatch.build]
+dev-mode-dirs = ["src"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/cybersecgpt/reasoning"]
 
