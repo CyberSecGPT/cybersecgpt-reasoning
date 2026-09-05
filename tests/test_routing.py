@@ -158,19 +158,11 @@ def test_routing_decision_rejects_invalid_fields(
             RoutingDecisionInvalidReason.REQUEST_MISMATCH,
         ),
         (
-            {
-                "authorization_context_id": AuthorizationContextId(
-                    "authorization-2"
-                )
-            },
+            {"authorization_context_id": AuthorizationContextId("authorization-2")},
             RoutingDecisionInvalidReason.AUTHORIZATION_CONTEXT_MISMATCH,
         ),
         (
-            {
-                "security_policy_revision_id": SecurityPolicyRevisionId(
-                    "policy-8"
-                )
-            },
+            {"security_policy_revision_id": SecurityPolicyRevisionId("policy-8")},
             RoutingDecisionInvalidReason.SECURITY_POLICY_REVISION_MISMATCH,
         ),
         (
@@ -186,11 +178,7 @@ def test_routing_decision_rejects_invalid_fields(
             RoutingDecisionInvalidReason.OFFLINE_REQUIREMENT_MISMATCH,
         ),
         (
-            {
-                "capability_snapshot_id": CapabilitySnapshotId(
-                    "capabilities-5"
-                )
-            },
+            {"capability_snapshot_id": CapabilitySnapshotId("capabilities-5")},
             RoutingDecisionInvalidReason.CAPABILITY_SNAPSHOT_MISMATCH,
         ),
     ],
@@ -259,9 +247,7 @@ def test_validation_rejects_not_yet_valid_decision() -> None:
         now=CREATED_AT - timedelta(microseconds=1),
     )
 
-    assert result.invalid_reasons == (
-        RoutingDecisionInvalidReason.NOT_YET_VALID,
-    )
+    assert result.invalid_reasons == (RoutingDecisionInvalidReason.NOT_YET_VALID,)
 
 
 @pytest.mark.parametrize(

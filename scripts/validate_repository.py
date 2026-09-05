@@ -38,9 +38,7 @@ SECRET_PATTERNS = (
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
 )
 
-TEXT_SUFFIXES = frozenset(
-    {".md", ".py", ".toml", ".txt", ".yml", ".yaml"}
-)
+TEXT_SUFFIXES = frozenset({".md", ".py", ".toml", ".txt", ".yml", ".yaml"})
 TEXT_NAMES = frozenset({"LICENSE", ".gitattributes", ".gitignore"})
 PROVIDER_DEPENDENCY_MARKERS = (
     "openai",
@@ -85,15 +83,9 @@ def _text_files() -> list[Path]:
     for path in ROOT.rglob("*"):
         if not path.is_file():
             continue
-        if any(
-            part.startswith(".") and part not in {".github"}
-            for part in path.parts
-        ):
+        if any(part.startswith(".") and part not in {".github"} for part in path.parts):
             continue
-        if any(
-            part in {"build", "dist", "__pycache__"}
-            for part in path.parts
-        ):
+        if any(part in {"build", "dist", "__pycache__"} for part in path.parts):
             continue
         if path.suffix in TEXT_SUFFIXES or path.name in TEXT_NAMES:
             files.append(path)
@@ -101,9 +93,7 @@ def _text_files() -> list[Path]:
 
 
 def main() -> None:
-    missing = sorted(
-        path for path in REQUIRED_FILES if not (ROOT / path).is_file()
-    )
+    missing = sorted(path for path in REQUIRED_FILES if not (ROOT / path).is_file())
     _require(not missing, f"required repository files are missing: {missing}")
 
     dependencies = _project_dependencies()
@@ -114,8 +104,7 @@ def main() -> None:
     normalized_dependencies = "\n".join(dependencies).lower()
     _require(
         not any(
-            marker in normalized_dependencies
-            for marker in PROVIDER_DEPENDENCY_MARKERS
+            marker in normalized_dependencies for marker in PROVIDER_DEPENDENCY_MARKERS
         ),
         "provider SDK dependency detected in core runtime dependencies",
     )
@@ -125,8 +114,7 @@ def main() -> None:
         for pattern in SECRET_PATTERNS:
             _require(
                 pattern.search(text) is None,
-                "sensitive material pattern detected in "
-                f"{path.relative_to(ROOT)}",
+                "sensitive material pattern detected in " f"{path.relative_to(ROOT)}",
             )
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -135,8 +123,7 @@ def main() -> None:
         "README must reference Accepted ADR-0011",
     )
     _require(
-        "not" in readme.lower()
-        and "authorization grant" in readme.lower(),
+        "not" in readme.lower() and "authorization grant" in readme.lower(),
         "README must preserve the non-authorizing routing boundary",
     )
 

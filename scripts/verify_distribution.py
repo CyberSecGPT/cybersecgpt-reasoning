@@ -33,9 +33,7 @@ def _require(condition: bool, message: str) -> None:
 def verify_wheel(path: Path) -> None:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
-        source_members = {
-            name for name in names if name.startswith("cybersecgpt/")
-        }
+        source_members = {name for name in names if name.startswith("cybersecgpt/")}
         _require(
             source_members == EXPECTED_SOURCE_MEMBERS,
             f"wheel source members are incorrect: {sorted(source_members)}",
@@ -46,9 +44,7 @@ def verify_wheel(path: Path) -> None:
             "top-level package",
         )
         _require(
-            not any(
-                name.startswith("cybersecgpt/foundation/") for name in names
-            ),
+            not any(name.startswith("cybersecgpt/foundation/") for name in names),
             "reasoning wheel must not bundle Foundation implementation",
         )
 
@@ -69,9 +65,7 @@ def verify_wheel(path: Path) -> None:
             metadata.get("Version") == "0.1.0",
             "wheel Version is incorrect",
         )
-        requirements = [
-            str(item) for item in metadata.get_all("Requires-Dist", [])
-        ]
+        requirements = [str(item) for item in metadata.get_all("Requires-Dist", [])]
         foundation_requirements = [
             item
             for item in requirements
@@ -79,17 +73,12 @@ def verify_wheel(path: Path) -> None:
         ]
         _require(
             len(foundation_requirements) == 1,
-            "wheel must declare one Foundation runtime dependency: "
-            f"{requirements}",
+            "wheel must declare one Foundation runtime dependency: " f"{requirements}",
         )
         runtime_requirement = foundation_requirements[0].replace(" ", "")
         _require(
-            runtime_requirement.startswith(
-                "cybersecgpt-foundation<0.2,>=0.1.0"
-            )
-            or runtime_requirement.startswith(
-                "cybersecgpt-foundation>=0.1.0,<0.2"
-            ),
+            runtime_requirement.startswith("cybersecgpt-foundation<0.2,>=0.1.0")
+            or runtime_requirement.startswith("cybersecgpt-foundation>=0.1.0,<0.2"),
             "Foundation dependency range is incorrect: "
             f"{foundation_requirements[0]}",
         )
