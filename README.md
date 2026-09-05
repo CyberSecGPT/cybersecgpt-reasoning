@@ -4,11 +4,29 @@
 
 ## Status
 
-**P5 executable bootstrap — routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
+**P5 executable bootstrap — normalized request admission, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
 ## Implemented P5 slices
+
+### Normalized request admission
+
+`BrainRequest` is an immutable normalized control envelope for work that is ready to be considered by the Reasoning router. It carries:
+
+- shared Foundation `RequestId` and `CorrelationId` values;
+- the already-authoritative Foundation `RoutingSecurityBinding`;
+- machine-evaluable task/domain/complexity/safety metadata;
+- source/claimed data classification kept separate from authoritative effective classification;
+- optional opaque identity-context reference;
+- latency, compute, memory, and reasoning ceilings;
+- accuracy, determinism, explainability, and verification requirements;
+- UTC admission/deadline metadata; and
+- canonical bounded JSON input.
+
+`admit_brain_request` serializes raw input through Foundation's defensive JSON bounds before constructing the immutable request. Admission rejects request/security-binding identity mismatch, malformed metadata, invalid resource/deadline state, duplicate verification requirements, and noncanonical direct JSON construction.
+
+This admission contract is **not** an authorization or classification engine. It consumes an already-authoritative `RoutingSecurityBinding`; it does not authenticate identity, mint a grant, evaluate target scope, derive or lower effective data classification, or authorize a side effect. Runtime enforcement of device/compute/memory/cancellation primitives remains outside this slice.
 
 ### Routing-decision validity
 
@@ -56,7 +74,7 @@ A larger budget therefore requires a fresh routing decision before the routing-b
 
 ## Native independence
 
-Core routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 
