@@ -132,7 +132,7 @@ The validator does not authenticate a binding, evaluate policy, verify target sc
 - reasoning steps;
 - model-token accounting;
 - tool-call accounting;
-- retrieval-call accounting;
+- retrieval-call accounting; and
 - verifier-pass accounting.
 
 The budget also carries a validated policy name and optional unique structured stop-condition labels. Policy names are not intelligence claims and are not restricted to a closed enum by this slice.
