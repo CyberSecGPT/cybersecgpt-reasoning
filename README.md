@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — normalized request admission, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
+**P5 executable bootstrap — normalized request admission, validated substrate discovery, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -27,6 +27,16 @@ The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecG
 `admit_brain_request` serializes raw input through Foundation's defensive JSON bounds before constructing the immutable request. Admission rejects request/security-binding identity mismatch, malformed metadata, invalid resource/deadline state, duplicate verification requirements, and noncanonical direct JSON construction.
 
 This admission contract is **not** an authorization or classification engine. It consumes an already-authoritative `RoutingSecurityBinding`; it does not authenticate identity, mint a grant, evaluate target scope, derive or lower effective data classification, or authorize a side effect. Runtime enforcement of device/compute/memory/cancellation primitives remains outside this slice.
+
+### Validated substrate discovery
+
+`SubstrateDescriptor` is immutable machine-evaluable metadata for one routable intelligence substrate. It uses Foundation `SubstrateId` identity and explicitly carries substrate version/kind/owner, supported capabilities, offline/network properties, determinism and data-handling profiles, bounded resource metadata, authorization and verification requirements, availability state, and source/build/artifact integrity provenance.
+
+A descriptor is not routable merely because a component describes itself. `SubstrateValidationEvidence` is a separate time-bounded record whose trusted boundary owner must have completed source-trust, identity, version, integrity, compatibility, and external policy-constraint checks. `ValidatedSubstrate` refuses incomplete validation evidence, and `validate_substrate_descriptor` rejects evidence that is not yet valid or has expired.
+
+`build_capability_snapshot` creates an immutable deterministic `CapabilitySnapshot` bound to Foundation `CapabilitySnapshotId`. Snapshot members are sorted by substrate identity, duplicate identities are rejected, and validation freshness is rechecked at snapshot creation. Discovery preserves explicit `AVAILABLE`, `DEGRADED`, `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` states rather than silently converting availability into a routing choice.
+
+The snapshot is control metadata, not authorization. Reasoning does not authenticate descriptor validators, evaluate authoritative security policy, grant permissions, or represent the authoritative security-policy/authorization evaluator as a router-selectable substrate. Those trusted boundaries remain external and must be enforced by their owning components.
 
 ### Routing-decision validity
 
@@ -74,7 +84,7 @@ A larger budget therefore requires a fresh routing decision before the routing-b
 
 ## Native independence
 
-Core request admission, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, substrate discovery, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 
