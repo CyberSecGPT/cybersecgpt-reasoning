@@ -16,12 +16,20 @@ from cybersecgpt.foundation import (
 )
 
 from cybersecgpt.reasoning import (
+    ReasoningBudget,
+    ReasoningBudgetDelta,
+    ReasoningBudgetError,
+    ReasoningBudgetUsage,
     RoutingDecision,
     RoutingDecisionError,
     RoutingDecisionInvalidReason,
     RoutingDecisionReasonCode,
     RoutingDecisionValidation,
     RoutingDecisionValidationError,
+    RoutingReasoningBudgetError,
+    RoutingReasoningBudgetUsage,
+    begin_routing_reasoning_budget,
+    consume_routing_reasoning_budget,
     validate_routing_decision,
 )
 
@@ -43,6 +51,21 @@ def make_binding(**overrides: object) -> RoutingSecurityBinding:
     return RoutingSecurityBinding(**values)  # type: ignore[arg-type]
 
 
+def make_budget(**overrides: object) -> ReasoningBudget:
+    values: dict[str, object] = {
+        "policy_name": "NORMAL",
+        "max_candidates": 4,
+        "max_branch_depth": 3,
+        "max_steps": 8,
+        "max_model_tokens": 1024,
+        "max_tool_calls": 2,
+        "max_retrieval_calls": 3,
+        "max_verifier_passes": 2,
+    }
+    values.update(overrides)
+    return ReasoningBudget(**values)  # type: ignore[arg-type]
+
+
 def make_decision(**overrides: object) -> RoutingDecision:
     values: dict[str, object] = {
         "decision_id": RoutingDecisionId("route-1"),
@@ -51,6 +74,7 @@ def make_decision(**overrides: object) -> RoutingDecision:
         "router_policy_version": "p5-v1",
         "selected_substrates": (SubstrateId("native-general"),),
         "reason_codes": (RoutingDecisionReasonCode.CAPABILITY_MATCH,),
+        "reasoning_budget": make_budget(),
         "created_at": CREATED_AT,
         "expires_at": EXPIRES_AT,
     }
@@ -66,6 +90,7 @@ def test_valid_routing_decision_and_validation() -> None:
         now=CREATED_AT + timedelta(seconds=1),
     )
 
+    assert decision.reasoning_budget.policy_name == "NORMAL"
     assert result.decision_id == decision.decision_id
     assert result.validated_at == CREATED_AT + timedelta(seconds=1)
     assert result.valid is True
@@ -119,6 +144,7 @@ def test_routing_decision_is_immutable() -> None:
             ),
             "duplicates",
         ),
+        ("reasoning_budget", "budget", "reasoning_budget"),
         ("created_at", "now", "created_at"),
         ("created_at", datetime(2026, 9, 5, 12, 0), "created_at"),
         (
@@ -149,6 +175,125 @@ def test_routing_decision_rejects_invalid_fields(
 ) -> None:
     with pytest.raises(RoutingDecisionError, match=message):
         make_decision(**{field_name: value})
+
+
+def test_routing_budget_usage_is_bound_and_consumed_monotonically() -> None:
+    decision = make_decision()
+    initial = begin_routing_reasoning_budget(decision)
+    updated = consume_routing_reasoning_budget(
+        decision,
+        initial,
+        ReasoningBudgetDelta(steps=2, branch_depth=1, model_tokens=64),
+    )
+
+    assert initial.decision_id == decision.decision_id
+    assert initial.usage.budget == decision.reasoning_budget
+    assert initial.usage.steps == 0
+    assert updated.decision_id == decision.decision_id
+    assert updated.usage.budget == decision.reasoning_budget
+    assert updated.usage.steps == 2
+    assert updated.usage.branch_depth == 1
+    assert updated.usage.model_tokens == 64
+    assert initial.usage.steps == 0
+
+
+def test_routing_budget_usage_is_immutable() -> None:
+    state = begin_routing_reasoning_budget(make_decision())
+
+    with pytest.raises(FrozenInstanceError):
+        state.decision_id = RoutingDecisionId("route-2")  # type: ignore[misc]
+
+
+def test_routing_budget_binding_rejects_cross_decision_usage() -> None:
+    decision = make_decision()
+    state = begin_routing_reasoning_budget(decision)
+    other_decision = make_decision(decision_id=RoutingDecisionId("route-2"))
+
+    with pytest.raises(RoutingReasoningBudgetError, match="routing decision"):
+        consume_routing_reasoning_budget(
+            other_decision,
+            state,
+            ReasoningBudgetDelta(steps=1),
+        )
+
+
+def test_routing_budget_binding_rejects_budget_substitution() -> None:
+    decision = make_decision(reasoning_budget=make_budget(max_steps=2))
+    substituted = RoutingReasoningBudgetUsage(
+        decision_id=decision.decision_id,
+        usage=ReasoningBudgetUsage(budget=make_budget(max_steps=9)),
+    )
+
+    with pytest.raises(RoutingReasoningBudgetError, match="does not match"):
+        consume_routing_reasoning_budget(
+            decision,
+            substituted,
+            ReasoningBudgetDelta(steps=1),
+        )
+
+
+def test_fresh_decision_can_admit_a_larger_budget() -> None:
+    original = make_decision(reasoning_budget=make_budget(max_steps=2))
+    enlarged = make_decision(
+        decision_id=RoutingDecisionId("route-2"),
+        reasoning_budget=make_budget(max_steps=9),
+    )
+
+    original_state = begin_routing_reasoning_budget(original)
+    enlarged_state = begin_routing_reasoning_budget(enlarged)
+
+    assert original_state.usage.budget.max_steps == 2
+    assert enlarged_state.decision_id == RoutingDecisionId("route-2")
+    assert enlarged_state.usage.budget.max_steps == 9
+
+
+@pytest.mark.parametrize(
+    ("decision_id", "usage", "message"),
+    [
+        (
+            "route-1",
+            ReasoningBudgetUsage(budget=make_budget()),
+            "decision_id",
+        ),
+        (RoutingDecisionId("route-1"), "usage", "usage"),
+    ],
+)
+def test_routing_budget_usage_rejects_invalid_fields(
+    decision_id: object,
+    usage: object,
+    message: str,
+) -> None:
+    with pytest.raises(RoutingReasoningBudgetError, match=message):
+        RoutingReasoningBudgetUsage(
+            decision_id=cast(RoutingDecisionId, decision_id),
+            usage=cast(ReasoningBudgetUsage, usage),
+        )
+
+
+def test_routing_budget_helpers_reject_invalid_inputs() -> None:
+    decision = make_decision()
+    state = begin_routing_reasoning_budget(decision)
+
+    with pytest.raises(RoutingReasoningBudgetError, match="decision"):
+        begin_routing_reasoning_budget(cast(RoutingDecision, "decision"))
+    with pytest.raises(RoutingReasoningBudgetError, match="decision"):
+        consume_routing_reasoning_budget(
+            cast(RoutingDecision, "decision"),
+            state,
+            ReasoningBudgetDelta(),
+        )
+    with pytest.raises(RoutingReasoningBudgetError, match="state"):
+        consume_routing_reasoning_budget(
+            decision,
+            cast(RoutingReasoningBudgetUsage, "state"),
+            ReasoningBudgetDelta(),
+        )
+    with pytest.raises(ReasoningBudgetError, match="delta"):
+        consume_routing_reasoning_budget(
+            decision,
+            state,
+            cast(ReasoningBudgetDelta, "delta"),
+        )
 
 
 @pytest.mark.parametrize(
