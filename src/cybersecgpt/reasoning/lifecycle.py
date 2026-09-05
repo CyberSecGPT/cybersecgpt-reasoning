@@ -270,9 +270,7 @@ def transition_reasoning_state(
     if not isinstance(decision, RoutingDecision):
         raise ReasoningLifecycleError("decision must be a RoutingDecision")
     if not isinstance(snapshot, ReasoningLifecycleSnapshot):
-        raise ReasoningLifecycleError(
-            "snapshot must be a ReasoningLifecycleSnapshot"
-        )
+        raise ReasoningLifecycleError("snapshot must be a ReasoningLifecycleSnapshot")
     if not isinstance(state, ReasoningState):
         raise ReasoningLifecycleError("state must be a ReasoningState")
     transition_cause = _require_text(cause, field_name="cause")
@@ -281,9 +279,7 @@ def transition_reasoning_state(
     elif isinstance(budget_delta, ReasoningBudgetDelta):
         delta = budget_delta
     else:
-        raise ReasoningLifecycleError(
-            "budget_delta must be a ReasoningBudgetDelta"
-        )
+        raise ReasoningLifecycleError("budget_delta must be a ReasoningBudgetDelta")
     if snapshot.routing_decision_id != decision.decision_id:
         raise ReasoningLifecycleError(
             "lifecycle routing decision does not match supplied decision"
