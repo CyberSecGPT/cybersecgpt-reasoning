@@ -84,7 +84,7 @@ def construct_request(**overrides: object) -> BrainRequest:
     return BrainRequest(**make_values(**overrides))  # type: ignore[arg-type]
 
 
-def test_admit_brain_request_normalizes_immutable_input_and_keeps_claim_separate() -> None:
+def test_admission_normalizes_immutable_input_and_keeps_claim_separate() -> None:
     input_value = {"query": "inspect", "targets": ["fixture-a"]}
     request = admit_brain_request(
         request_id=REQUEST_ID,
@@ -169,7 +169,16 @@ def test_request_allows_absent_optional_accuracy_and_classification_metadata() -
             "timezone-aware UTC",
         ),
         (
-            {"deadline": datetime(2026, 9, 5, 16, 0, tzinfo=timezone(timedelta(hours=2)))},
+            {
+                "deadline": datetime(
+                    2026,
+                    9,
+                    5,
+                    16,
+                    0,
+                    tzinfo=timezone(timedelta(hours=2)),
+                )
+            },
             "timezone-aware UTC",
         ),
         ({"deadline": ADMITTED_AT}, "later than admitted_at"),
