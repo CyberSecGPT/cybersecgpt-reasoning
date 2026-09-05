@@ -10,13 +10,26 @@ from cybersecgpt.foundation import (
     SubstrateId,
 )
 
-from .errors import RoutingDecisionError, RoutingDecisionValidationError
+from .budget import (
+    ReasoningBudget,
+    ReasoningBudgetDelta,
+    ReasoningBudgetUsage,
+    consume_reasoning_budget,
+)
+from .errors import (
+    RoutingDecisionError,
+    RoutingDecisionValidationError,
+    RoutingReasoningBudgetError,
+)
 
 __all__ = [
     "RoutingDecision",
     "RoutingDecisionInvalidReason",
     "RoutingDecisionReasonCode",
     "RoutingDecisionValidation",
+    "RoutingReasoningBudgetUsage",
+    "begin_routing_reasoning_budget",
+    "consume_routing_reasoning_budget",
     "validate_routing_decision",
 ]
 
@@ -88,6 +101,7 @@ class RoutingDecision:
     router_policy_version: str
     selected_substrates: tuple[SubstrateId, ...]
     reason_codes: tuple[RoutingDecisionReasonCode, ...]
+    reasoning_budget: ReasoningBudget
     created_at: datetime
     expires_at: datetime
 
@@ -134,6 +148,9 @@ class RoutingDecision:
             )
         if len(set(self.reason_codes)) != len(self.reason_codes):
             raise RoutingDecisionError("reason_codes must not contain duplicates")
+
+        if not isinstance(self.reasoning_budget, ReasoningBudget):
+            raise RoutingDecisionError("reasoning_budget must be a ReasoningBudget")
 
         created_at = _require_utc_datetime(
             self.created_at,
@@ -187,6 +204,57 @@ class RoutingDecisionValidation:
             raise RoutingDecisionValidationError(
                 "valid must be true exactly when invalid_reasons is empty"
             )
+
+
+@dataclass(frozen=True, slots=True)
+class RoutingReasoningBudgetUsage:
+    """Bind one immutable budget-usage ledger to one routing decision identity."""
+
+    decision_id: RoutingDecisionId
+    usage: ReasoningBudgetUsage
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.decision_id, RoutingDecisionId):
+            raise RoutingReasoningBudgetError("decision_id must be a RoutingDecisionId")
+        if not isinstance(self.usage, ReasoningBudgetUsage):
+            raise RoutingReasoningBudgetError("usage must be a ReasoningBudgetUsage")
+
+
+def begin_routing_reasoning_budget(
+    decision: RoutingDecision,
+) -> RoutingReasoningBudgetUsage:
+    """Create a zero-usage ledger bound to the decision's admitted budget."""
+    if not isinstance(decision, RoutingDecision):
+        raise RoutingReasoningBudgetError("decision must be a RoutingDecision")
+    return RoutingReasoningBudgetUsage(
+        decision_id=decision.decision_id,
+        usage=ReasoningBudgetUsage(budget=decision.reasoning_budget),
+    )
+
+
+def consume_routing_reasoning_budget(
+    decision: RoutingDecision,
+    state: RoutingReasoningBudgetUsage,
+    delta: ReasoningBudgetDelta,
+) -> RoutingReasoningBudgetUsage:
+    """Consume budget only when the ledger remains bound to the same decision."""
+    if not isinstance(decision, RoutingDecision):
+        raise RoutingReasoningBudgetError("decision must be a RoutingDecision")
+    if not isinstance(state, RoutingReasoningBudgetUsage):
+        raise RoutingReasoningBudgetError("state must be a RoutingReasoningBudgetUsage")
+    if state.decision_id != decision.decision_id:
+        raise RoutingReasoningBudgetError(
+            "budget usage routing decision does not match the admitted decision"
+        )
+    if state.usage.budget != decision.reasoning_budget:
+        raise RoutingReasoningBudgetError(
+            "budget usage does not match the admitted routing decision budget"
+        )
+
+    return RoutingReasoningBudgetUsage(
+        decision_id=state.decision_id,
+        usage=consume_reasoning_budget(state.usage, delta),
+    )
 
 
 def validate_routing_decision(
