@@ -10,6 +10,7 @@ from .budget import (
     exhausted_reasoning_budget_dimensions,
 )
 from .errors import (
+    BrainRequestError,
     ReasoningBudgetError,
     ReasoningError,
     ReasoningLifecycleError,
@@ -23,6 +24,7 @@ from .lifecycle import (
     begin_reasoning_lifecycle,
     transition_reasoning_state,
 )
+from .request import BrainRequest, admit_brain_request
 from .routing import (
     RoutingDecision,
     RoutingDecisionInvalidReason,
@@ -36,6 +38,9 @@ from .routing import (
 
 __all__ = [
     "ReasoningError",
+    "BrainRequestError",
+    "BrainRequest",
+    "admit_brain_request",
     "ReasoningBudgetError",
     "ReasoningBudgetExceededError",
     "ReasoningBudget",
