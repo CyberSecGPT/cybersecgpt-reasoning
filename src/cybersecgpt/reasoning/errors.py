@@ -8,6 +8,7 @@ __all__ = [
     "RoutingReasoningBudgetError",
     "RoutingDecisionError",
     "RoutingDecisionValidationError",
+    "SubstrateDiscoveryError",
 ]
 
 
@@ -37,3 +38,7 @@ class RoutingDecisionError(ReasoningError):
 
 class RoutingDecisionValidationError(RoutingDecisionError):
     """Report an invalid request to the routing-decision validator."""
+
+
+class SubstrateDiscoveryError(ReasoningError):
+    """Report invalid substrate metadata, validation evidence, or snapshot state."""
