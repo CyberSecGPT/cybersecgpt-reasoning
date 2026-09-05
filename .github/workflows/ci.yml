@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: CyberSecGPT/cybersecgpt-foundation
-          ref: 30a5c23f47b63ab0196fb4c40378b127d51acf36
+          ref: 4d534c0142ab3198078dd96a95d310a298165c5c
           path: .deps/cybersecgpt-foundation
 
       - name: Set up Python
@@ -75,7 +75,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: CyberSecGPT/cybersecgpt-foundation
-          ref: 30a5c23f47b63ab0196fb4c40378b127d51acf36
+          ref: 4d534c0142ab3198078dd96a95d310a298165c5c
           path: .deps/cybersecgpt-foundation
 
       - name: Set up Python
