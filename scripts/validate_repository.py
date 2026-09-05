@@ -25,9 +25,11 @@ REQUIRED_FILES = frozenset(
         "src/cybersecgpt/reasoning/__init__.py",
         "src/cybersecgpt/reasoning/budget.py",
         "src/cybersecgpt/reasoning/errors.py",
+        "src/cybersecgpt/reasoning/lifecycle.py",
         "src/cybersecgpt/reasoning/routing.py",
         "tests/__init__.py",
         "tests/test_budget.py",
+        "tests/test_lifecycle.py",
         "tests/test_public_api.py",
         "tests/test_routing.py",
     }

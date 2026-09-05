@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — routing validity, bounded reasoning budgets, and routing-budget binding.**
+**P5 executable bootstrap — routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -39,9 +39,24 @@ Every admitted `RoutingDecision` carries one immutable `ReasoningBudget`. `begin
 
 A larger budget therefore requires a fresh routing decision before the routing-bound consumption path will accept it. This binding still does **not** authenticate authorization or make the router an authorizer; authoritative policy and authorization remain outside this repository.
 
+### Deterministic reasoning lifecycle
+
+`ReasoningState` exposes the P5 lifecycle states from `ADMITTED` through planning, evidence, policy, authorized-tool execution, verification/revision, and terminal outcomes. `ReasoningLifecycleSnapshot` is immutable and records:
+
+- routing-decision identity;
+- correlation identity;
+- monotonic transition sequence;
+- previous and current state;
+- structured caller-safe cause text; and
+- the routing-bound reasoning-budget usage snapshot.
+
+`begin_reasoning_lifecycle` starts at `ADMITTED` with sequence zero. `transition_reasoning_state` increments the sequence by exactly one, applies a bounded routing-bound budget delta, and enforces the explicit transition graph. Terminal states (`COMPLETED`, `DEFERRED`, `DENIED`, `FAILED`, `CANCELLED`) cannot transition again.
+
+`EXECUTING_AUTHORIZED_TOOL` is reachable only from `AWAITING_POLICY`, but the state name is still **not authorization**. This repository does not mint or validate the external grant required for a privileged tool side effect. Cancellation propagation to active components and deadline clocks are intentionally not implemented in this slice.
+
 ## Native independence
 
-Core routing and budget control have no proprietary-provider SDK dependency and perform no network I/O.
+Core routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 

@@ -12,9 +12,16 @@ from .budget import (
 from .errors import (
     ReasoningBudgetError,
     ReasoningError,
+    ReasoningLifecycleError,
     RoutingDecisionError,
     RoutingDecisionValidationError,
     RoutingReasoningBudgetError,
+)
+from .lifecycle import (
+    ReasoningLifecycleSnapshot,
+    ReasoningState,
+    begin_reasoning_lifecycle,
+    transition_reasoning_state,
 )
 from .routing import (
     RoutingDecision,
@@ -37,6 +44,11 @@ __all__ = [
     "ReasoningBudgetUsage",
     "consume_reasoning_budget",
     "exhausted_reasoning_budget_dimensions",
+    "ReasoningLifecycleError",
+    "ReasoningLifecycleSnapshot",
+    "ReasoningState",
+    "begin_reasoning_lifecycle",
+    "transition_reasoning_state",
     "RoutingReasoningBudgetError",
     "RoutingReasoningBudgetUsage",
     "begin_routing_reasoning_budget",
