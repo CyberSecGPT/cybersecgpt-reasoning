@@ -353,9 +353,7 @@ class CapabilitySnapshot:
 
     def __post_init__(self) -> None:
         if not isinstance(self.snapshot_id, CapabilitySnapshotId):
-            raise SubstrateDiscoveryError(
-                "snapshot_id must be a CapabilitySnapshotId"
-            )
+            raise SubstrateDiscoveryError("snapshot_id must be a CapabilitySnapshotId")
         created_at = _require_utc_datetime(self.created_at, field_name="created_at")
         if not isinstance(self.substrates, tuple):
             raise SubstrateDiscoveryError("substrates must be a tuple")
