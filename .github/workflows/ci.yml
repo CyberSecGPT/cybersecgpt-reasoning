@@ -56,6 +56,11 @@ jobs:
       - name: Check installed dependency consistency
         run: python -m pip check
 
+      - name: Verify split-package imports
+        run: >-
+          python -c
+          "import cybersecgpt.foundation; import cybersecgpt.reasoning"
+
       - name: Run tests with coverage
         run: >-
           python -m pytest
