@@ -1,6 +1,7 @@
 """Typed public errors for CyberSecGPT reasoning control."""
 
 __all__ = [
+    "BrainRequestError",
     "ReasoningError",
     "ReasoningBudgetError",
     "ReasoningLifecycleError",
@@ -12,6 +13,10 @@ __all__ = [
 
 class ReasoningError(Exception):
     """Base error for reasoning-control contract failures."""
+
+
+class BrainRequestError(ReasoningError):
+    """Report an invalid normalized Native Brain request or admission input."""
 
 
 class ReasoningBudgetError(ReasoningError):

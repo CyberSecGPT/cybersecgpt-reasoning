@@ -2,14 +2,19 @@
 
 ## Security boundary
 
-`cybersecgpt-reasoning` treats routing and reasoning output as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
+`cybersecgpt-reasoning` treats request, routing, and reasoning state as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
 
 ## Required properties
 
+- reject malformed normalized request metadata before routing;
+- require request identity to match the supplied authoritative `RoutingSecurityBinding`;
+- keep source/claimed classification separate from authoritative effective classification and never derive the latter from untrusted request content;
+- bound task input through Foundation's defensive JSON limits and store canonical immutable JSON rather than mutable caller containers;
+- reject invalid UTC admission/deadline metadata and malformed resource ceilings;
 - fail closed on expired or mismatched routing decisions;
 - never lower effective data classification from untrusted content;
 - never widen provider/network permission or offline constraints;
-- never treat decision possession as permission;
+- never treat request admission or decision possession as permission;
 - never silently fall back to a proprietary remote AI provider;
 - keep core runtime dependencies free of provider SDKs;
 - enforce immutable reasoning ceilings with monotonic consumption accounting;
@@ -22,6 +27,8 @@
 - never treat candidate agreement, remaining budget, lifecycle state, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
+
+Normalized request admission validates structure and carries already-authoritative security references. It does not authenticate identity, evaluate security policy, validate target scope, grant side-effect permission, or perform runtime device/compute/memory enforcement.
 
 Cancellation state is terminal in the current lifecycle contract. Propagation of cancellation to active model/tool/retrieval/verifier components is a separate required P5 integration and is not claimed by this slice.
 
