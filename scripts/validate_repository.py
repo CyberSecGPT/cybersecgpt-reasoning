@@ -80,24 +80,44 @@ def _project_dependencies(parsed: dict[str, object]) -> list[str]:
     return [cast(str, item) for item in dependency_list]
 
 
-def _hatch_dev_mode_dirs(parsed: dict[str, object]) -> list[str]:
+def _hatch_build_table(parsed: dict[str, object]) -> dict[str, object]:
     tool = parsed.get("tool")
     _require(isinstance(tool, dict), "pyproject tool table is missing")
     hatch = cast(dict[str, object], tool).get("hatch")
     _require(isinstance(hatch, dict), "pyproject tool.hatch table is missing")
     build = cast(dict[str, object], hatch).get("build")
     _require(isinstance(build, dict), "pyproject tool.hatch.build table is missing")
-    dev_mode_dirs = cast(dict[str, object], build).get("dev-mode-dirs")
-    _require(
-        isinstance(dev_mode_dirs, list),
-        "Hatch dev-mode-dirs must be a list",
-    )
-    values = cast(list[object], dev_mode_dirs)
+    return cast(dict[str, object], build)
+
+
+def _string_list(value: object, *, field_name: str) -> list[str]:
+    _require(isinstance(value, list), f"{field_name} must be a list")
+    values = cast(list[object], value)
     _require(
         all(isinstance(item, str) for item in values),
-        "Hatch dev-mode-dirs must contain strings",
+        f"{field_name} must contain strings",
     )
     return [cast(str, item) for item in values]
+
+
+def _hatch_dev_mode_dirs(parsed: dict[str, object]) -> list[str]:
+    build = _hatch_build_table(parsed)
+    return _string_list(
+        build.get("dev-mode-dirs"),
+        field_name="Hatch dev-mode-dirs",
+    )
+
+
+def _hatch_wheel_packages(parsed: dict[str, object]) -> list[str]:
+    build = _hatch_build_table(parsed)
+    targets = build.get("targets")
+    _require(isinstance(targets, dict), "pyproject Hatch targets table is missing")
+    wheel = cast(dict[str, object], targets).get("wheel")
+    _require(isinstance(wheel, dict), "pyproject Hatch wheel target is missing")
+    return _string_list(
+        cast(dict[str, object], wheel).get("packages"),
+        field_name="Hatch wheel packages",
+    )
 
 
 def _text_files() -> list[Path]:
@@ -136,6 +156,12 @@ def main() -> None:
     _require(
         dev_mode_dirs == ["src"],
         f"Hatch editable-install source path changed unexpectedly: {dev_mode_dirs}",
+    )
+
+    wheel_packages = _hatch_wheel_packages(pyproject)
+    _require(
+        wheel_packages == ["src/cybersecgpt"],
+        f"Hatch wheel package boundary changed unexpectedly: {wheel_packages}",
     )
 
     for path in _text_files():
