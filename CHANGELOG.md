@@ -8,4 +8,7 @@
 - Immutable structured routing decisions bound to Foundation routing-security state.
 - Deterministic lifetime and binding validation with typed invalidity reasons.
 - Structured routing reason codes without private chain-of-thought requirements.
+- Immutable bounded `ReasoningBudget`, `ReasoningBudgetUsage`, and `ReasoningBudgetDelta` contracts.
+- Monotonic budget consumption with candidate, branch-depth, step, model-token, tool-call, retrieval-call, and verifier-pass ceilings.
+- Typed exhausted/exceeded budget dimensions with fail-closed over-consumption behavior.
 - Python 3.11–3.13 CI with strict static, security, coverage, build, and distribution checks.

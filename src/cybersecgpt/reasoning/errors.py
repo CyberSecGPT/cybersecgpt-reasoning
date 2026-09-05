@@ -2,6 +2,7 @@
 
 __all__ = [
     "ReasoningError",
+    "ReasoningBudgetError",
     "RoutingDecisionError",
     "RoutingDecisionValidationError",
 ]
@@ -9,6 +10,10 @@ __all__ = [
 
 class ReasoningError(Exception):
     """Base error for reasoning-control contract failures."""
+
+
+class ReasoningBudgetError(ReasoningError):
+    """Report an invalid reasoning-budget value or operation."""
 
 
 class RoutingDecisionError(ReasoningError):

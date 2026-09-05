@@ -6,6 +6,14 @@ import cybersecgpt.reasoning as reasoning
 def test_public_api_is_explicit() -> None:
     assert reasoning.__all__ == [
         "ReasoningError",
+        "ReasoningBudgetError",
+        "ReasoningBudgetExceededError",
+        "ReasoningBudget",
+        "ReasoningBudgetDelta",
+        "ReasoningBudgetDimension",
+        "ReasoningBudgetUsage",
+        "consume_reasoning_budget",
+        "exhausted_reasoning_budget_dimensions",
         "RoutingDecisionError",
         "RoutingDecisionValidationError",
         "RoutingDecision",
