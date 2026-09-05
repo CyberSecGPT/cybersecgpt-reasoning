@@ -1,8 +1,8 @@
 """Normalized P5 Native Brain request admission contracts."""
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import re
 
 from cybersecgpt.foundation import (
     CorrelationId,
@@ -103,7 +103,9 @@ def _require_canonical_input_json(value: object) -> str:
             "input_json must be valid JSON within Foundation safety bounds"
         ) from exc
     if canonical != value:
-        raise BrainRequestError("input_json must use canonical Foundation JSON encoding")
+        raise BrainRequestError(
+            "input_json must use canonical Foundation JSON encoding"
+        )
     return value
 
 
