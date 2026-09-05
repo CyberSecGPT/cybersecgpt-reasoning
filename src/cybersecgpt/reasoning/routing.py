@@ -215,13 +215,9 @@ class RoutingReasoningBudgetUsage:
 
     def __post_init__(self) -> None:
         if not isinstance(self.decision_id, RoutingDecisionId):
-            raise RoutingReasoningBudgetError(
-                "decision_id must be a RoutingDecisionId"
-            )
+            raise RoutingReasoningBudgetError("decision_id must be a RoutingDecisionId")
         if not isinstance(self.usage, ReasoningBudgetUsage):
-            raise RoutingReasoningBudgetError(
-                "usage must be a ReasoningBudgetUsage"
-            )
+            raise RoutingReasoningBudgetError("usage must be a ReasoningBudgetUsage")
 
 
 def begin_routing_reasoning_budget(
@@ -245,9 +241,7 @@ def consume_routing_reasoning_budget(
     if not isinstance(decision, RoutingDecision):
         raise RoutingReasoningBudgetError("decision must be a RoutingDecision")
     if not isinstance(state, RoutingReasoningBudgetUsage):
-        raise RoutingReasoningBudgetError(
-            "state must be a RoutingReasoningBudgetUsage"
-        )
+        raise RoutingReasoningBudgetError("state must be a RoutingReasoningBudgetUsage")
     if state.decision_id != decision.decision_id:
         raise RoutingReasoningBudgetError(
             "budget usage routing decision does not match the admitted decision"
