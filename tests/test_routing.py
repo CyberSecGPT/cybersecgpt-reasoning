@@ -5,7 +5,6 @@ from datetime import UTC, datetime, timedelta, timezone
 from typing import cast
 
 import pytest
-
 from cybersecgpt.foundation import (
     AuthorizationContextId,
     CapabilitySnapshotId,
@@ -15,6 +14,7 @@ from cybersecgpt.foundation import (
     SecurityPolicyRevisionId,
     SubstrateId,
 )
+
 from cybersecgpt.reasoning import (
     RoutingDecision,
     RoutingDecisionError,
