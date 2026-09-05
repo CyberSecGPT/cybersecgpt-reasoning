@@ -15,7 +15,6 @@ from cybersecgpt.foundation import (
     SecurityPolicyRevisionId,
     SubstrateId,
 )
-
 from cybersecgpt.reasoning import (
     RoutingDecision,
     RoutingDecisionError,
