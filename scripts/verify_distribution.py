@@ -8,6 +8,7 @@ from pathlib import Path
 EXPECTED_SOURCE_MEMBERS = frozenset(
     {
         "cybersecgpt/reasoning/__init__.py",
+        "cybersecgpt/reasoning/budget.py",
         "cybersecgpt/reasoning/errors.py",
         "cybersecgpt/reasoning/routing.py",
     }
