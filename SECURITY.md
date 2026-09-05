@@ -16,9 +16,14 @@
 - fail closed when proposed reasoning consumption crosses any admitted ceiling;
 - bind routing-integrated budget usage to both routing-decision identity and the decision's immutable admitted budget;
 - reject cross-decision budget-ledger reuse and same-decision budget substitution;
-- never treat candidate agreement, remaining budget, or a budget profile as authorization or verified fact;
+- preserve immutable lifecycle snapshots with monotonic transition sequences and routing-bound budget snapshots;
+- make terminal lifecycle outcomes final so completed, deferred, denied, failed, or cancelled work cannot be resumed by mutating control state;
+- allow the `EXECUTING_AUTHORIZED_TOOL` lifecycle state only after `AWAITING_POLICY`, while never treating that state transition as an authorization grant;
+- never treat candidate agreement, remaining budget, lifecycle state, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
+
+Cancellation state is terminal in the current lifecycle contract. Propagation of cancellation to active model/tool/retrieval/verifier components is a separate required P5 integration and is not claimed by this slice.
 
 ## Reporting a vulnerability
 
