@@ -5,6 +5,8 @@
 ### Added
 
 - P5 Reasoning repository bootstrap.
+- Immutable normalized `BrainRequest` admission with shared Foundation identifiers and authoritative routing-security binding reuse.
+- Canonical bounded JSON request input plus machine-evaluable task, resource, deadline, and verification metadata.
 - Immutable structured routing decisions bound to Foundation routing-security state.
 - Deterministic lifetime and binding validation with typed invalidity reasons.
 - Structured routing reason codes without private chain-of-thought requirements.
