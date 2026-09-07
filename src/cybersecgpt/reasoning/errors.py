@@ -10,6 +10,7 @@ __all__ = [
     "RoutingDecisionError",
     "RoutingDecisionValidationError",
     "SubstrateDiscoveryError",
+    "TerminationPropagationError",
 ]
 
 
@@ -47,3 +48,7 @@ class RoutingDecisionValidationError(RoutingDecisionError):
 
 class SubstrateDiscoveryError(ReasoningError):
     """Report invalid substrate metadata, validation evidence, or snapshot state."""
+
+
+class TerminationPropagationError(ReasoningError):
+    """Report invalid cancellation/deadline propagation control state."""
