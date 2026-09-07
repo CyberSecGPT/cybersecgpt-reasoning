@@ -5,7 +5,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
 
-from cybersecgpt.foundation import CorrelationId, RequestId, RoutingDecisionId, SubstrateId
+from cybersecgpt.foundation import (
+    CorrelationId,
+    RequestId,
+    RoutingDecisionId,
+    SubstrateId,
+)
 
 from .errors import TerminationPropagationError
 from .lifecycle import ReasoningLifecycleSnapshot
@@ -146,7 +151,9 @@ class TerminationRequirement:
         if not isinstance(self.required, bool):
             raise TerminationPropagationError("required must be a bool")
         if self.reason is not None and not isinstance(self.reason, TerminationReason):
-            raise TerminationPropagationError("reason must be a TerminationReason or None")
+            raise TerminationPropagationError(
+                "reason must be a TerminationReason or None"
+            )
         if self.triggered_at is not None:
             triggered_at = _require_utc_datetime(
                 self.triggered_at,
@@ -220,7 +227,8 @@ class TerminationAcknowledgement:
         if self.state is TerminationAcknowledgementState.STOPPED:
             if not self.evidence_preserved_or_not_applicable:
                 raise TerminationPropagationError(
-                    "STOPPED acknowledgement must preserve evidence or mark it not applicable"
+                    "STOPPED acknowledgement must preserve evidence or mark it "
+                    "not applicable"
                 )
         if self.state is TerminationAcknowledgementState.CLEANUP_PENDING:
             if self.cleanup_authorization_ref is None:
@@ -406,7 +414,9 @@ def evaluate_termination_requirement(
         )
     now = _require_utc_datetime(observed_at, field_name="observed_at")
     if now < request.admitted_at:
-        raise TerminationPropagationError("observed_at cannot predate request admission")
+        raise TerminationPropagationError(
+            "observed_at cannot predate request admission"
+        )
     _validate_execution_bindings(request, decision, lifecycle)
 
     cancellation_at: datetime | None = None
@@ -494,7 +504,9 @@ def begin_termination_propagation(
             "propagation requires an active cancellation or deadline condition"
         )
     if requirement.request_id != request.request_id:
-        raise TerminationPropagationError("requirement request_id does not match request")
+        raise TerminationPropagationError(
+            "requirement request_id does not match request"
+        )
     if requirement.routing_decision_id != decision.decision_id:
         raise TerminationPropagationError(
             "requirement routing_decision_id does not match decision"
