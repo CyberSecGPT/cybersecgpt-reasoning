@@ -440,20 +440,22 @@ def evaluate_termination_requirement(
         )
 
     deadline = request.deadline
-    reached_cancellation = cancellation_at is not None and cancellation_at <= now
-    reached_deadline = deadline is not None and deadline <= now
-
-    if reached_cancellation and reached_deadline:
+    if (
+        cancellation_at is not None
+        and cancellation_at <= now
+        and deadline is not None
+        and deadline <= now
+    ):
         if deadline <= cancellation_at:
             reason = TerminationReason.DEADLINE
             triggered_at = deadline
         else:
             reason = TerminationReason.CANCELLATION
             triggered_at = cancellation_at
-    elif reached_cancellation:
+    elif cancellation_at is not None and cancellation_at <= now:
         reason = TerminationReason.CANCELLATION
         triggered_at = cancellation_at
-    elif reached_deadline:
+    elif deadline is not None and deadline <= now:
         reason = TerminationReason.DEADLINE
         triggered_at = deadline
     else:
