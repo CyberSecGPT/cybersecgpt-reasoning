@@ -26,6 +26,7 @@ from .errors import (
     RoutingDecisionValidationError,
     RoutingReasoningBudgetError,
     SubstrateDiscoveryError,
+    TerminationPropagationError,
 )
 from .lifecycle import (
     ReasoningLifecycleSnapshot,
@@ -55,6 +56,21 @@ from .substrates import (
     ValidatedSubstrate,
     build_capability_snapshot,
     validate_substrate_descriptor,
+)
+from .termination import (
+    TerminationAcknowledgement,
+    TerminationAcknowledgementState,
+    TerminationPropagation,
+    TerminationPropagationEvaluation,
+    TerminationPropagationStatus,
+    TerminationReason,
+    TerminationRequirement,
+    TerminationTarget,
+    TerminationTargetKind,
+    acknowledge_termination_target,
+    begin_termination_propagation,
+    evaluate_termination_propagation,
+    evaluate_termination_requirement,
 )
 
 __all__ = [
@@ -103,4 +119,18 @@ __all__ = [
     "RoutingDecisionReasonCode",
     "RoutingDecisionValidation",
     "validate_routing_decision",
+    "TerminationPropagationError",
+    "TerminationReason",
+    "TerminationTargetKind",
+    "TerminationAcknowledgementState",
+    "TerminationPropagationStatus",
+    "TerminationRequirement",
+    "TerminationTarget",
+    "TerminationAcknowledgement",
+    "TerminationPropagation",
+    "TerminationPropagationEvaluation",
+    "evaluate_termination_requirement",
+    "begin_termination_propagation",
+    "acknowledge_termination_target",
+    "evaluate_termination_propagation",
 ]
