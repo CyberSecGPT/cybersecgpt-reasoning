@@ -89,7 +89,9 @@ def _require_tokens(
 ) -> tuple[str, ...]:
     if not isinstance(value, tuple):
         raise CandidateSelectionError(f"{field_name} must be a tuple")
-    values = tuple(_require_token(item, field_name=f"{field_name} item") for item in value)
+    values = tuple(
+        _require_token(item, field_name=f"{field_name} item") for item in value
+    )
     if not allow_empty and not values:
         raise CandidateSelectionError(f"{field_name} must not be empty")
     if len(set(values)) != len(values):
@@ -139,7 +141,10 @@ class CandidateSelectionPolicy:
             raise CandidateSelectionError(
                 "authorization_context_id must be an AuthorizationContextId"
             )
-        _require_text(self.provider_network_policy, field_name="provider_network_policy")
+        _require_text(
+            self.provider_network_policy,
+            field_name="provider_network_policy",
+        )
         _require_tokens(
             self.required_capabilities,
             field_name="required_capabilities",
@@ -291,19 +296,13 @@ class CandidateSelectionResult:
             )
         if len(set(self.reason_codes)) != len(self.reason_codes):
             raise CandidateSelectionError("reason_codes must not contain duplicates")
-        has_capability_match = RoutingDecisionReasonCode.CAPABILITY_MATCH in self.reason_codes
+        has_capability_match = (
+            RoutingDecisionReasonCode.CAPABILITY_MATCH in self.reason_codes
+        )
         if has_capability_match != bool(self.selected_substrates):
             raise CandidateSelectionError(
                 "CAPABILITY_MATCH must be present exactly when candidates are selected"
             )
-
-
-def _append_unique(
-    reasons: list[CandidateRejectionReason],
-    reason: CandidateRejectionReason,
-) -> None:
-    if reason not in reasons:
-        reasons.append(reason)
 
 
 def _evaluate_candidate(
@@ -327,7 +326,10 @@ def _evaluate_candidate(
         reasons.append(CandidateRejectionReason.SUBSTRATE_KIND_RESTRICTED)
 
     availability = descriptor.availability_state
-    if availability is SubstrateAvailabilityState.DEGRADED and not policy.allow_degraded:
+    if (
+        availability is SubstrateAvailabilityState.DEGRADED
+        and not policy.allow_degraded
+    ):
         reasons.append(CandidateRejectionReason.DEGRADED_NOT_ALLOWED)
     elif availability is SubstrateAvailabilityState.UNAVAILABLE:
         reasons.append(CandidateRejectionReason.UNAVAILABLE)
@@ -476,7 +478,10 @@ def select_candidate_substrates(
         )
     if snapshot.created_at > now:
         raise CandidateSelectionError("capability snapshot is not yet valid")
-    if policy.security_policy_revision_id != current_binding.security_policy_revision_id:
+    if (
+        policy.security_policy_revision_id
+        != current_binding.security_policy_revision_id
+    ):
         raise CandidateSelectionError(
             "candidate policy security revision does not match current binding"
         )
@@ -496,7 +501,8 @@ def select_candidate_substrates(
         for substrate in snapshot.substrates
     )
     by_id = {
-        substrate.descriptor.substrate_id: substrate for substrate in snapshot.substrates
+        substrate.descriptor.substrate_id: substrate
+        for substrate in snapshot.substrates
     }
     eligible = [
         by_id[evaluation.substrate_id]
