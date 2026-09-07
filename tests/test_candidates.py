@@ -22,6 +22,7 @@ from cybersecgpt.reasoning import (
     CandidateSelectionError,
     CandidateSelectionPolicy,
     CandidateSelectionResult,
+    CapabilitySnapshot,
     ReasoningBudget,
     RoutingDecisionReasonCode,
     SubstrateAvailabilityState,
@@ -155,7 +156,7 @@ def make_snapshot(
     *descriptors: SubstrateDescriptor,
     validations: tuple[SubstrateValidationEvidence, ...] | None = None,
     snapshot_id: CapabilitySnapshotId = SNAPSHOT_ID,
-) -> object:
+) -> CapabilitySnapshot:
     if not descriptors:
         descriptors = (make_descriptor(),)
     evidence = validations or tuple(make_validation() for _ in descriptors)
@@ -190,7 +191,7 @@ def make_policy(**overrides: object) -> CandidateSelectionPolicy:
 def select(
     *,
     request: BrainRequest | None = None,
-    snapshot: object | None = None,
+    snapshot: CapabilitySnapshot | None = None,
     policy: CandidateSelectionPolicy | None = None,
     current_binding: RoutingSecurityBinding | None = None,
     observed_at: datetime = NOW,
@@ -198,7 +199,7 @@ def select(
     actual_request = request or make_request()
     return select_candidate_substrates(
         actual_request,
-        cast(object, snapshot or make_snapshot()),  # type: ignore[arg-type]
+        snapshot or make_snapshot(),
         policy or make_policy(),
         current_binding=current_binding or actual_request.security_binding,
         observed_at=observed_at,
@@ -299,11 +300,17 @@ def test_selector_rejects_each_capability_and_resource_mismatch() -> None:
         ),
         make_descriptor(
             substrate_id=SubstrateId("model:compute"),
-            resource_profile=make_resource(min_compute_units=9),
+            resource_profile=make_resource(
+                min_compute_units=9,
+                max_compute_units=9,
+            ),
         ),
         make_descriptor(
             substrate_id=SubstrateId("model:memory"),
-            resource_profile=make_resource(min_memory_bytes=9000),
+            resource_profile=make_resource(
+                min_memory_bytes=9000,
+                max_memory_bytes=9000,
+            ),
         ),
         make_descriptor(
             substrate_id=SubstrateId("model:latency-unknown"),
@@ -345,7 +352,7 @@ def test_selector_rejects_each_capability_and_resource_mismatch() -> None:
     ]
 
 
-def test_selector_handles_availability_determinism_explainability_and_accuracy() -> None:
+def test_selector_handles_availability_and_quality_constraints() -> None:
     candidates = (
         make_descriptor(
             substrate_id=SubstrateId("model:degraded"),
@@ -466,7 +473,7 @@ def test_policy_rejects_invalid_structure(
         make_policy(**overrides)
 
 
-def test_policy_allows_empty_optional_constraint_sets_and_no_explainability_token() -> None:
+def test_policy_allows_empty_optional_constraints() -> None:
     policy = make_policy(
         allowed_network_requirements=(),
         satisfied_authorization_requirements=(),
@@ -518,7 +525,6 @@ def test_candidate_evaluation_rejects_inconsistent_state(
 
 
 def test_selector_rejects_binding_snapshot_policy_and_deadline_mismatches() -> None:
-    request = make_request()
     snapshot = make_snapshot()
 
     with pytest.raises(CandidateSelectionError, match="current_binding must match"):
@@ -581,7 +587,7 @@ def test_selector_rejects_invalid_component_types(
     with pytest.raises(CandidateSelectionError, match=message):
         select_candidate_substrates(
             cast(BrainRequest, request),
-            cast(object, snapshot),  # type: ignore[arg-type]
+            cast(CapabilitySnapshot, snapshot),
             cast(CandidateSelectionPolicy, policy),
             current_binding=cast(RoutingSecurityBinding, binding),
             observed_at=observed_at,
