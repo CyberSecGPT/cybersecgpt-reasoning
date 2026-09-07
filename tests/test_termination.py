@@ -477,7 +477,11 @@ def test_empty_active_target_set_is_immediately_complete() -> None:
         ),
         ({"required": True, "reason": None, "triggered_at": NOW}, "reason exists"),
         (
-            {"required": True, "reason": TerminationReason.DEADLINE, "triggered_at": None},
+            {
+                "required": True,
+                "reason": TerminationReason.DEADLINE,
+                "triggered_at": None,
+            },
             "triggered_at exists",
         ),
     ],
@@ -658,7 +662,10 @@ def test_propagation_rejects_invalid_target_and_acknowledgement_collections() ->
         acknowledgements=(ack_b,),
         sequence=1,
     )
-    with pytest.raises(TerminationPropagationError, match="declared termination targets"):
+    with pytest.raises(
+        TerminationPropagationError,
+        match="declared termination targets",
+    ):
         TerminationPropagation(**invalid)  # type: ignore[arg-type]
 
     early_ack = make_acknowledgement(
