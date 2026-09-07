@@ -45,7 +45,7 @@ jobs:
         run: python -m ruff check .
 
       - name: Check formatting
-        run: python -m black --check .
+        run: python -m black --check --diff .
 
       - name: Run mypy
         run: python -m mypy src scripts
