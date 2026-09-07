@@ -1,7 +1,6 @@
 """Coverage of defensive P5 candidate-selection branches."""
 
 from datetime import UTC, datetime, timedelta
-from typing import cast
 
 import pytest
 from cybersecgpt.foundation import (
@@ -271,10 +270,3 @@ def test_reason_codes_can_omit_verification_and_deadline_restrictions() -> None:
         (eligible.substrate_id,),
     )
     assert codes == (RoutingDecisionReasonCode.CAPABILITY_MATCH,)
-
-
-def test_result_rejects_non_utc_offset_datetime() -> None:
-    non_utc = NOW.astimezone(UTC).replace(tzinfo=None).replace(
-        tzinfo=cast(object, UTC)  # type: ignore[arg-type]
-    )
-    assert non_utc.utcoffset() == timedelta(0)
