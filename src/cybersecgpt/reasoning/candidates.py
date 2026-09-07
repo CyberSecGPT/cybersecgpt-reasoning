@@ -49,9 +49,7 @@ class CandidateRejectionReason(StrEnum):
     OFFLINE_UNSUPPORTED = "OFFLINE_UNSUPPORTED"
     NETWORK_POLICY_RESTRICTION = "NETWORK_POLICY_RESTRICTION"
     DATA_CLASSIFICATION_RESTRICTION = "DATA_CLASSIFICATION_RESTRICTION"
-    AUTHORIZATION_REQUIREMENT_UNSATISFIED = (
-        "AUTHORIZATION_REQUIREMENT_UNSATISFIED"
-    )
+    AUTHORIZATION_REQUIREMENT_UNSATISFIED = "AUTHORIZATION_REQUIREMENT_UNSATISFIED"
     COMPUTE_BUDGET_EXCEEDED = "COMPUTE_BUDGET_EXCEEDED"
     MEMORY_BUDGET_EXCEEDED = "MEMORY_BUDGET_EXCEEDED"
     LATENCY_BUDGET_UNPROVEN = "LATENCY_BUDGET_UNPROVEN"
@@ -259,15 +257,11 @@ class CandidateSelectionResult:
         evaluation_ids = tuple(item.substrate_id for item in self.evaluations)
         if len(set(evaluation_ids)) != len(evaluation_ids):
             raise CandidateSelectionError("evaluations must not contain duplicate IDs")
-        if evaluation_ids != tuple(
-            sorted(evaluation_ids, key=lambda item: item.value)
-        ):
+        if evaluation_ids != tuple(sorted(evaluation_ids, key=lambda item: item.value)):
             raise CandidateSelectionError("evaluations must be sorted by substrate_id")
         if not isinstance(self.selected_substrates, tuple):
             raise CandidateSelectionError("selected_substrates must be a tuple")
-        if not all(
-            isinstance(item, SubstrateId) for item in self.selected_substrates
-        ):
+        if not all(isinstance(item, SubstrateId) for item in self.selected_substrates):
             raise CandidateSelectionError(
                 "selected_substrates must contain only SubstrateId values"
             )
@@ -279,9 +273,7 @@ class CandidateSelectionResult:
             raise CandidateSelectionError(
                 "selected_substrates exceeds max_selected_substrates"
             )
-        eligible_ids = {
-            item.substrate_id for item in self.evaluations if item.eligible
-        }
+        eligible_ids = {item.substrate_id for item in self.evaluations if item.eligible}
         if not set(self.selected_substrates).issubset(eligible_ids):
             raise CandidateSelectionError(
                 "selected_substrates must contain only eligible substrates"
@@ -352,9 +344,7 @@ def _evaluate_candidate(
     if not set(descriptor.authorization_requirements).issubset(
         policy.satisfied_authorization_requirements
     ):
-        reasons.append(
-            CandidateRejectionReason.AUTHORIZATION_REQUIREMENT_UNSATISFIED
-        )
+        reasons.append(CandidateRejectionReason.AUTHORIZATION_REQUIREMENT_UNSATISFIED)
 
     resources = descriptor.resource_profile
     if resources.min_compute_units > request.max_compute_units:
@@ -374,9 +364,7 @@ def _evaluate_candidate(
     if not set(request.verification_requirements).issubset(
         descriptor.verification_profile
     ):
-        reasons.append(
-            CandidateRejectionReason.VERIFICATION_REQUIREMENT_UNSUPPORTED
-        )
+        reasons.append(CandidateRejectionReason.VERIFICATION_REQUIREMENT_UNSUPPORTED)
     if request.required_explainability:
         profile = policy.explainability_profile
         if profile is None or profile not in descriptor.verification_profile:
