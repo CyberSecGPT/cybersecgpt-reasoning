@@ -30,6 +30,7 @@ REQUIRED_FILES = frozenset(
         "src/cybersecgpt/reasoning/request.py",
         "src/cybersecgpt/reasoning/routing.py",
         "src/cybersecgpt/reasoning/substrates.py",
+        "src/cybersecgpt/reasoning/termination.py",
         "tests/__init__.py",
         "tests/test_budget.py",
         "tests/test_candidates.py",
@@ -38,6 +39,7 @@ REQUIRED_FILES = frozenset(
         "tests/test_request.py",
         "tests/test_routing.py",
         "tests/test_substrates.py",
+        "tests/test_termination.py",
     }
 )
 
