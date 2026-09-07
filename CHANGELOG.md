@@ -10,6 +10,9 @@
 - Immutable `SubstrateDescriptor` metadata using shared Foundation `SubstrateId` identities and explicit kind, capability, network, data-handling, resource, availability, and provenance fields.
 - Separate time-bounded `SubstrateValidationEvidence` requiring trusted-source, identity, version, integrity, compatibility, and external policy checks before a descriptor becomes validated discovery state.
 - Deterministic immutable `CapabilitySnapshot` values bound to Foundation `CapabilitySnapshotId` identities, with duplicate-ID rejection and validation-freshness rechecks.
+- Deterministic candidate selection from validated capability snapshots with explicit capability, availability, offline/network, classification, authorization-requirement, resource, determinism, verification, explainability, and validation-freshness filtering.
+- Stable resource-aware candidate ranking that prefers available competent substrates with lower minimum compute/memory requirements and deterministic `SubstrateId` tie-breaking.
+- Typed per-substrate candidate rejection reasons and non-authorizing candidate-selection result metadata bound to the current security-policy revision, authorization context, provider/network policy, request, and capability snapshot.
 - Immutable structured routing decisions bound to Foundation routing-security state.
 - Deterministic lifetime and binding validation with typed invalidity reasons.
 - Structured routing reason codes without private chain-of-thought requirements.
