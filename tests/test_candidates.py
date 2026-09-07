@@ -558,7 +558,7 @@ def test_selector_rejects_binding_snapshot_policy_and_deadline_mismatches() -> N
 
 
 @pytest.mark.parametrize(
-    ("request", "snapshot", "policy", "binding", "observed_at", "message"),
+    ("request_value", "snapshot", "policy", "binding", "observed_at", "message"),
     [
         ("request", make_snapshot(), make_policy(), make_binding(), NOW, "request"),
         (make_request(), "snapshot", make_policy(), make_binding(), NOW, "snapshot"),
@@ -582,7 +582,7 @@ def test_selector_rejects_binding_snapshot_policy_and_deadline_mismatches() -> N
     ],
 )
 def test_selector_rejects_invalid_component_types(
-    request: object,
+    request_value: object,
     snapshot: object,
     policy: object,
     binding: object,
@@ -591,7 +591,7 @@ def test_selector_rejects_invalid_component_types(
 ) -> None:
     with pytest.raises(CandidateSelectionError, match=message):
         select_candidate_substrates(
-            cast(BrainRequest, request),
+            cast(BrainRequest, request_value),
             cast(CapabilitySnapshot, snapshot),
             cast(CandidateSelectionPolicy, policy),
             current_binding=cast(RoutingSecurityBinding, binding),
