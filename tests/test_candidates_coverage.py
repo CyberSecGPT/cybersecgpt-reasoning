@@ -150,7 +150,10 @@ def test_result_rejects_invalid_identity_policy_time_and_container_types() -> No
         make_result(evaluations=[])
     with pytest.raises(CandidateSelectionError, match="CandidateEvaluation"):
         make_result(evaluations=("evaluation",))
-    with pytest.raises(CandidateSelectionError, match="selected_substrates must be a tuple"):
+    with pytest.raises(
+        CandidateSelectionError,
+        match="selected_substrates must be a tuple",
+    ):
         make_result(selected_substrates=[])
     with pytest.raises(CandidateSelectionError, match="SubstrateId"):
         make_result(selected_substrates=("model:a",))
@@ -170,8 +173,16 @@ def test_result_rejects_duplicate_unsorted_and_inconsistent_selection_state() ->
     with pytest.raises(CandidateSelectionError, match="sorted by substrate_id"):
         make_result(evaluations=(eligible_b, eligible_a))
     with pytest.raises(CandidateSelectionError, match="must not contain duplicates"):
-        make_result(selected_substrates=(eligible_a.substrate_id, eligible_a.substrate_id))
-    with pytest.raises(CandidateSelectionError, match="exceeds max_selected_substrates"):
+        make_result(
+            selected_substrates=(
+                eligible_a.substrate_id,
+                eligible_a.substrate_id,
+            )
+        )
+    with pytest.raises(
+        CandidateSelectionError,
+        match="exceeds max_selected_substrates",
+    ):
         make_result(
             evaluations=(eligible_a, eligible_b),
             selected_substrates=(eligible_a.substrate_id, eligible_b.substrate_id),
@@ -181,7 +192,10 @@ def test_result_rejects_duplicate_unsorted_and_inconsistent_selection_state() ->
             evaluations=(ineligible_a,),
             selected_substrates=(ineligible_a.substrate_id,),
         )
-    with pytest.raises(CandidateSelectionError, match="reason_codes must not contain duplicates"):
+    with pytest.raises(
+        CandidateSelectionError,
+        match="reason_codes must not contain duplicates",
+    ):
         make_result(
             reason_codes=(
                 RoutingDecisionReasonCode.CAPABILITY_MATCH,
