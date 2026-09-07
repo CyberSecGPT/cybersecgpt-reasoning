@@ -9,8 +9,16 @@ from .budget import (
     consume_reasoning_budget,
     exhausted_reasoning_budget_dimensions,
 )
+from .candidates import (
+    CandidateEvaluation,
+    CandidateRejectionReason,
+    CandidateSelectionPolicy,
+    CandidateSelectionResult,
+    select_candidate_substrates,
+)
 from .errors import (
     BrainRequestError,
+    CandidateSelectionError,
     ReasoningBudgetError,
     ReasoningError,
     ReasoningLifecycleError,
@@ -65,6 +73,12 @@ __all__ = [
     "CapabilitySnapshot",
     "validate_substrate_descriptor",
     "build_capability_snapshot",
+    "CandidateSelectionError",
+    "CandidateRejectionReason",
+    "CandidateSelectionPolicy",
+    "CandidateEvaluation",
+    "CandidateSelectionResult",
+    "select_candidate_substrates",
     "ReasoningBudgetError",
     "ReasoningBudgetExceededError",
     "ReasoningBudget",

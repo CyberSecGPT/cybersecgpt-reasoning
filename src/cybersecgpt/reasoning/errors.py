@@ -2,6 +2,7 @@
 
 __all__ = [
     "BrainRequestError",
+    "CandidateSelectionError",
     "ReasoningError",
     "ReasoningBudgetError",
     "ReasoningLifecycleError",
@@ -18,6 +19,10 @@ class ReasoningError(Exception):
 
 class BrainRequestError(ReasoningError):
     """Report an invalid normalized Native Brain request or admission input."""
+
+
+class CandidateSelectionError(ReasoningError):
+    """Report invalid deterministic substrate candidate selection state."""
 
 
 class ReasoningBudgetError(ReasoningError):

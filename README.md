@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — normalized request admission, validated substrate discovery, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
+**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -37,6 +37,31 @@ A descriptor is not routable merely because a component describes itself. `Subst
 `build_capability_snapshot` creates an immutable deterministic `CapabilitySnapshot` bound to Foundation `CapabilitySnapshotId`. Snapshot members are sorted by substrate identity, duplicate identities are rejected, and validation freshness is rechecked at snapshot creation. Discovery preserves explicit `AVAILABLE`, `DEGRADED`, `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` states rather than silently converting availability into a routing choice.
 
 The snapshot is control metadata, not authorization. Reasoning does not authenticate descriptor validators, evaluate authoritative security policy, grant permissions, or represent the authoritative security-policy/authorization evaluator as a router-selectable substrate. Those trusted boundaries remain external and must be enforced by their owning components.
+
+### Deterministic candidate selection
+
+`select_candidate_substrates` consumes a normalized `BrainRequest`, the exact validated `CapabilitySnapshot` bound by the current `RoutingSecurityBinding`, a current binding, and an immutable `CandidateSelectionPolicy`. It fails closed when request/binding/snapshot/policy identities do not match or when the request deadline has already been reached.
+
+Each discovered substrate receives an immutable `CandidateEvaluation`. Eligibility is machine-evaluable and checks:
+
+- required capability subset without inferring unknown capabilities;
+- approved substrate kind;
+- explicit availability state and degraded-route policy;
+- offline capability when offline operation is mandatory;
+- provider/network requirement classes allowed by the current router-policy input;
+- exact support for the authoritative effective data classification;
+- externally satisfied authorization-requirement facts bound to the current authorization context;
+- minimum compute and memory requirements against request ceilings;
+- declared maximum latency against the request latency ceiling;
+- required determinism profile;
+- verification and explainability requirements; and
+- validation-evidence freshness at selection time.
+
+Quantitative `required_accuracy` is currently fail-closed because P5 `SubstrateDescriptor` does not yet carry validated quantitative accuracy metadata. The selector therefore refuses to silently infer that a substrate satisfies a requested accuracy threshold.
+
+Eligible candidates are ranked deterministically. `AVAILABLE` substrates rank ahead of `DEGRADED` substrates; within the same availability class the selector prefers lower minimum compute, lower minimum memory, lower declared maximum latency, then lexicographic `SubstrateId` as the stable tie-breaker. This implements the conformance requirement to prefer a competent route within budget rather than automatically selecting the largest substrate.
+
+`CandidateSelectionResult` is proposal/control metadata only. It is **not an authorization grant**, does not execute a substrate, does not mint policy, and does not permit a side effect. The authoritative security-policy/authorization evaluator remains outside the selectable substrate registry and outside this selection function.
 
 ### Routing-decision validity
 
@@ -84,7 +109,7 @@ A larger budget therefore requires a fresh routing decision before the routing-b
 
 ## Native independence
 
-Core request admission, substrate discovery, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, substrate discovery, candidate selection, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 

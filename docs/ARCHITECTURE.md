@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
 
 ## Dependency direction
 
@@ -58,7 +58,7 @@ The envelope carries compute/memory/latency ceilings for later routing and runti
 
 Supported discovery kinds mirror the P5 conceptual routable classes: native model, retrieval, classical ML, domain rule/schema engine, symbolic, graph, tool, memory, verifier, and another explicitly approved routable class. The authoritative security-policy/authorization evaluator has no corresponding descriptor kind and remains outside this registry.
 
-`SubstrateAvailabilityState` preserves `AVAILABLE`, `DEGRADED`, `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` as metadata. Discovery does not convert these states into route selection; deterministic candidate selection remains a later P5 slice.
+`SubstrateAvailabilityState` preserves `AVAILABLE`, `DEGRADED`, `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` as metadata. Discovery itself does not convert these states into a routing decision.
 
 ### Validation boundary
 
@@ -91,6 +91,64 @@ A snapshot is immutable and deterministic:
 `build_capability_snapshot` accepts descriptor/evidence pairs, validates them at snapshot creation time, sorts the resulting members deterministically, and then constructs the snapshot. This keeps untrusted self-description separate from validated discovery state and gives later routing a versioned capability set without silently inferring unknown capability.
 
 A validated descriptor or snapshot is control metadata, not permission. It does not authenticate authorization, widen target scope, lower effective data classification, change provider/network policy, authorize a tool, or replace the authoritative security-policy evaluator. Later routing must still consume the request's current authoritative security binding and bind its decision to the exact capability snapshot identity.
+
+## Deterministic candidate selection
+
+`CandidateSelectionPolicy` is immutable router-control input. It carries router-policy identity/version plus machine-evaluable candidate constraints and is explicitly bound to the current Foundation `SecurityPolicyRevisionId`, `AuthorizationContextId`, and provider/network policy string. Those bindings prevent accidental reuse of candidate constraints across a different security revision, authorization context, or provider/network class. The object itself does not prove that the external policy owner is authentic and does not grant permission.
+
+`select_candidate_substrates` accepts:
+
+- one normalized `BrainRequest`;
+- the validated `CapabilitySnapshot` referenced by the current security binding;
+- one `CandidateSelectionPolicy`;
+- the current authoritative `RoutingSecurityBinding`; and
+- a UTC observation time.
+
+Before evaluating substrates it fails closed when:
+
+- the current binding differs from the request's admitted binding;
+- the snapshot identity differs from the binding's `CapabilitySnapshotId`;
+- the snapshot is newer than the selection observation time;
+- the selection policy is bound to a different security-policy revision;
+- the selection policy is bound to a different authorization context;
+- the selection policy is bound to a different provider/network policy; or
+- the request deadline has already been reached.
+
+### Eligibility
+
+Every snapshot member receives an immutable `CandidateEvaluation`. A substrate is eligible only when every applicable requirement succeeds:
+
+- all `required_capabilities` are explicitly present in the descriptor; unknown capability is never inferred;
+- the substrate kind is allowed by the current selection policy;
+- `AVAILABLE` is accepted, `DEGRADED` is accepted only when the policy explicitly permits it, and `UNAVAILABLE`, `REVOKED`, and `INCOMPATIBLE` are rejected;
+- an offline-required request selects only an `offline_capable` substrate;
+- every declared network requirement is inside the policy's allowed network classes;
+- the descriptor's `data_handling_profile` explicitly contains the authoritative effective classification from the request binding;
+- every descriptor authorization-requirement token is present in the externally supplied satisfied-requirement set bound to the current authorization context;
+- minimum compute and memory requirements fit within the request ceilings;
+- declared maximum latency is known and does not exceed the request latency ceiling;
+- when determinism is required, the descriptor's determinism profile is explicitly in the policy's deterministic-profile set;
+- request verification requirements are a subset of the descriptor verification profile;
+- when explainability is required, the policy provides an explicit explainability-profile token and the descriptor supports it; and
+- descriptor validation evidence remains current at selection time.
+
+Quantitative `required_accuracy` currently produces `ACCURACY_REQUIREMENT_UNSUPPORTED`. P5 `SubstrateDescriptor` has no validated quantitative accuracy field, so the selector refuses to infer that a substrate meets a numerical accuracy threshold. A later contract may add validated benchmark/quality metadata through an explicit architecture increment.
+
+### Ranking
+
+Only eligible substrates are ranked. The ordering is deterministic and policy-independent once eligibility is established:
+
+1. `AVAILABLE` before `DEGRADED`;
+2. lower minimum compute requirement;
+3. lower minimum memory requirement;
+4. lower declared maximum latency; and
+5. lexicographic `SubstrateId` as the stable tie-breaker.
+
+The selector returns at most `max_selected_substrates` from the current selection policy. This implements the conformance requirement to prefer a competent route within budget rather than automatically choosing the largest substrate.
+
+`CandidateSelectionResult` stores the request identity, exact capability snapshot identity, policy, observation time, deterministic per-substrate evaluations, selected candidate identities, and structured routing reason codes. A result may contain zero selected candidates when no discovered substrate satisfies all constraints; this is explicit capability-unavailable state for later routing/fallback handling rather than an implicit policy relaxation.
+
+Candidate selection is **proposal metadata, not authorization**. It does not create or extend a grant, execute a model/tool/retrieval system, bypass the authoritative security evaluator, lower effective classification, widen network permission, authorize a side effect, or establish a verified fact. Candidate consensus and rank have no permission semantics.
 
 ## Routing-decision contract
 
@@ -192,8 +250,8 @@ Terminal `CANCELLED` prevents further lifecycle transitions. This slice does not
 
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
 
 ## Future P5 slices
 
-Later P5 work may add deterministic candidate selection, cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+Later P5 work may add cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.

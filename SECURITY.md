@@ -2,7 +2,7 @@
 
 ## Security boundary
 
-`cybersecgpt-reasoning` treats request, substrate-discovery, routing, and reasoning state as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
+`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, and reasoning state as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
 
 ## Required properties
 
@@ -18,6 +18,17 @@
 - preserve explicit unavailable, degraded, revoked, and incompatible states rather than treating discovery as route selection;
 - keep the authoritative security-policy/authorization evaluator outside the router-selectable substrate registry;
 - never treat a validated descriptor or capability snapshot as an authorization grant;
+- bind candidate selection to the exact current request security binding, capability snapshot, security-policy revision, authorization context, and provider/network policy;
+- reject unknown/missing capability support instead of inferring capability from names, prompts, model output, or substrate type;
+- reject substrates whose declared data-handling profile does not explicitly support the authoritative effective classification;
+- reject offline-incompatible substrates for offline-required requests;
+- reject network classes, substrate kinds, or authorization requirements outside the current machine-evaluable selection constraints;
+- reject unavailable, revoked, incompatible, stale, and disallowed-degraded substrates before ranking;
+- reject substrates whose minimum compute/memory or declared maximum latency cannot satisfy request ceilings;
+- reject determinism, verification, and explainability mismatches rather than weakening request requirements;
+- fail closed on quantitative accuracy requirements until validated quantitative accuracy metadata exists in the substrate contract;
+- rank only already-eligible substrates and prefer lower-resource competent routes rather than automatically selecting the largest substrate;
+- never treat candidate consensus, ranking, or a selected candidate list as an authorization grant or verified fact;
 - fail closed on expired or mismatched routing decisions;
 - never lower effective data classification from untrusted content;
 - never widen provider/network permission or offline constraints;
@@ -38,6 +49,8 @@
 Normalized request admission validates structure and carries already-authoritative security references. It does not authenticate identity, evaluate security policy, validate target scope, grant side-effect permission, or perform runtime device/compute/memory enforcement.
 
 Substrate discovery validates the structure, externally supplied validation facts, freshness, identity uniqueness, and deterministic snapshot shape of capability metadata. It does not authenticate the validator, perform artifact signature verification itself, decide authoritative policy, or grant permission. Those validations must originate from trusted owning boundaries and are represented here only as machine-evaluable evidence required before routing can consume the descriptor.
+
+Candidate selection consumes only admitted request state, validated discovery state, the current `RoutingSecurityBinding`, and explicit machine-evaluable router constraints. It does not authenticate those authoritative inputs, mint or extend a grant, execute a substrate, bypass the security-policy evaluator, lower classification, widen provider/network permission, or permit a side effect. A candidate result remains a proposal for later routing-decision admission and current-state revalidation.
 
 Cancellation state is terminal in the current lifecycle contract. Propagation of cancellation to active model/tool/retrieval/verifier components is a separate required P5 integration and is not claimed by this slice.
 
