@@ -313,9 +313,7 @@ class TerminationPropagation:
             raise TerminationPropagationError(
                 "acknowledgements must contain only TerminationAcknowledgement values"
             )
-        acknowledgement_refs = tuple(
-            item.target_ref for item in self.acknowledgements
-        )
+        acknowledgement_refs = tuple(item.target_ref for item in self.acknowledgements)
         if len(set(acknowledgement_refs)) != len(acknowledgement_refs):
             raise TerminationPropagationError(
                 "acknowledgements must not contain duplicate target refs"
@@ -564,9 +562,7 @@ def acknowledge_termination_target(
             "acknowledgement must be a TerminationAcknowledgement"
         )
     target_refs = {target.target_ref for target in propagation.targets}
-    acknowledged_refs = {
-        item.target_ref for item in propagation.acknowledgements
-    }
+    acknowledged_refs = {item.target_ref for item in propagation.acknowledgements}
     if acknowledgement.target_ref not in target_refs:
         raise TerminationPropagationError(
             "acknowledgement target is not part of this propagation"
