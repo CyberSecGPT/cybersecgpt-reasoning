@@ -341,15 +341,18 @@ def test_selector_rejects_each_capability_and_resource_mismatch() -> None:
     assert CandidateRejectionReason.OFFLINE_UNSUPPORTED in reasons["model:offline"]
     assert CandidateRejectionReason.COMPUTE_BUDGET_EXCEEDED in reasons["model:compute"]
     assert CandidateRejectionReason.MEMORY_BUDGET_EXCEEDED in reasons["model:memory"]
-    assert CandidateRejectionReason.LATENCY_BUDGET_UNPROVEN in reasons[
-        "model:latency-unknown"
-    ]
-    assert CandidateRejectionReason.LATENCY_BUDGET_EXCEEDED in reasons[
-        "model:latency-high"
-    ]
-    assert CandidateRejectionReason.VERIFICATION_REQUIREMENT_UNSUPPORTED in reasons[
-        "model:verification"
-    ]
+    assert (
+        CandidateRejectionReason.LATENCY_BUDGET_UNPROVEN
+        in reasons["model:latency-unknown"]
+    )
+    assert (
+        CandidateRejectionReason.LATENCY_BUDGET_EXCEEDED
+        in reasons["model:latency-high"]
+    )
+    assert (
+        CandidateRejectionReason.VERIFICATION_REQUIREMENT_UNSUPPORTED
+        in reasons["model:verification"]
+    )
 
 
 def test_selector_handles_availability_and_quality_constraints() -> None:
@@ -398,12 +401,14 @@ def test_selector_handles_availability_and_quality_constraints() -> None:
     assert CandidateRejectionReason.UNAVAILABLE in reasons["model:unavailable"]
     assert CandidateRejectionReason.REVOKED in reasons["model:revoked"]
     assert CandidateRejectionReason.INCOMPATIBLE in reasons["model:incompatible"]
-    assert CandidateRejectionReason.DETERMINISM_UNSUPPORTED in reasons[
-        "model:nondeterministic"
-    ]
-    assert CandidateRejectionReason.EXPLAINABILITY_UNSUPPORTED in reasons[
-        "model:no-explain"
-    ]
+    assert (
+        CandidateRejectionReason.DETERMINISM_UNSUPPORTED
+        in reasons["model:nondeterministic"]
+    )
+    assert (
+        CandidateRejectionReason.EXPLAINABILITY_UNSUPPORTED
+        in reasons["model:no-explain"]
+    )
     assert all(
         CandidateRejectionReason.ACCURACY_REQUIREMENT_UNSUPPORTED
         in item.rejection_reasons
