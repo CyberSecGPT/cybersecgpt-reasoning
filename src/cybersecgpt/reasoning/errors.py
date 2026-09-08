@@ -12,6 +12,7 @@ __all__ = [
     "RoutingDecisionValidationError",
     "SubstrateDiscoveryError",
     "TerminationPropagationError",
+    "VerificationOrchestrationError",
 ]
 
 
@@ -57,3 +58,7 @@ class SubstrateDiscoveryError(ReasoningError):
 
 class TerminationPropagationError(ReasoningError):
     """Report invalid cancellation/deadline propagation control state."""
+
+
+class VerificationOrchestrationError(ReasoningError):
+    """Report invalid or unsafe verifier orchestration control state."""

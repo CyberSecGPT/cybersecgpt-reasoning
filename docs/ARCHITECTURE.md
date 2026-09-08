@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, deterministic reasoning lifecycle transitions, cancellation/deadline propagation control, and deterministic fallback replanning.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, deterministic reasoning lifecycle transitions, cancellation/deadline propagation control, deterministic fallback replanning, and deterministic verifier orchestration.
 
 ## Dependency direction
 
@@ -322,10 +322,24 @@ A successful replacement carries the same or a narrower `ReasoningBudget`. Alrea
 
 Fallback policy and fallback results are **control metadata, not authorization**. They do not authenticate grants, authorize target scope, execute a substrate, call a provider, permit privileged side effects, or replace current side-effect-boundary revalidation.
 
+## Deterministic verifier orchestration
+
+Verifier orchestration owns deterministic selection, bounded accounting, observation admission, independence evaluation, and aggregation control. It does not execute verifier substrates or retrieve, authenticate, or create evidence.
+
+`VerificationPolicy` binds required assertions, evidence classes, verifier classes, independence requirements, minimum supporting-verifier count, verifier-pass ceiling, optional deadline, and human-review requirement. `VerificationEvidenceReference`, `VerifierObservation`, `VerificationAssertionResult`, `VerificationOrchestrationState`, and `VerificationResult` keep provenance-bearing evidence references, external observations, aggregate conclusions, routing-bound budget state, and terminal verification status structured and immutable.
+
+`begin_verification_orchestration` revalidates the current routing/security bindings, capability snapshot, `VERIFYING` lifecycle, termination state, effective deadline, admitted verifier-pass budget, and evidence catalogue. Verifiers are chosen through the existing candidate selector under a policy restricted to validated `VERIFIER` substrates. A producing substrate cannot select itself; deterministic and distinct-owner requirements are enforced against current validated descriptor metadata.
+
+`record_verifier_observation` accepts only one observation per selected verifier/assertion pair, rechecks current bindings and verifier registration, rejects observations after cancellation or deadline, admits only required assertions and catalogued evidence references, and advances the lifecycle through a bounded `VERIFYING` transition that consumes exactly one verifier pass.
+
+`finalize_verification` preserves explicit `SUPPORTED`, `UNSUPPORTED`, `CONTRADICTORY`, `INSUFFICIENT_EVIDENCE`, `POLICY_BLOCKED`, `CANCELLED`, `DEADLINE`, `RESOURCE_LIMIT`, and `VERIFICATION_ERROR` outcomes. Support requires every required assertion to satisfy evidence, minimum-support, and independence policy. Human-review-required policy cannot produce automatic support. Contradiction and fail-closed outcomes take precedence and cannot be promoted to support.
+
+Verification results remain separate from generated output and are **not authorization**. No verifier observation, verifier agreement, evidence reference, remaining budget, lifecycle state, or verification result grants permission, widens target scope, lowers effective classification, changes provider/network or offline policy, or permits a privileged side effect.
+
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, lifecycle transitions, termination propagation control, or fallback replanning.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, lifecycle transitions, termination propagation control, fallback replanning, or verifier orchestration.
 
-## Future P5 slices
+## P5 boundary
 
-Later P5 work may add verifier orchestration. It must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+This repository now contains the designated executable P5 Reasoning slices. P5 closure still requires exact-head CI, package/distribution verification, complete diff and security review, merge, post-merge verification, and explicit cross-slice conformance evidence. Tokenizer, training, model-weight, persistent-memory, verifier execution, and privileged-tool implementation remain outside this change.
