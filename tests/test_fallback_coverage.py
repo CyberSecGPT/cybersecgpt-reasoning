@@ -559,9 +559,7 @@ def test_replan_rejects_invalid_unavailable_collection() -> None:
         FallbackReplanError,
         match="unavailable_substrates must be a tuple",
     ):
-        run_replan(
-            unavailable_substrates=cast(tuple[SubstrateId, ...], [PRIMARY_ID])
-        )
+        run_replan(unavailable_substrates=cast(tuple[SubstrateId, ...], [PRIMARY_ID]))
 
     with pytest.raises(FallbackReplanError, match="only SubstrateId"):
         run_replan(unavailable_substrates=cast(tuple[SubstrateId, ...], ("primary",)))
