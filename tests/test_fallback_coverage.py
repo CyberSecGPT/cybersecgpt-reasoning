@@ -9,14 +9,12 @@ from cybersecgpt.foundation import (
     CorrelationId,
     RequestId,
     RoutingDecisionId,
-    RoutingSecurityBinding,
     SubstrateId,
 )
 
 from cybersecgpt.reasoning import (
     CandidateSelectionResult,
     FallbackReplanError,
-    FallbackReplanPolicy,
     FallbackReplanResult,
     FallbackReplanStatus,
     FallbackTrigger,
@@ -35,9 +33,7 @@ from cybersecgpt.reasoning import (
 from .test_candidates import NOW, make_binding, make_policy, make_request, make_snapshot
 from .test_fallback import (
     FALLBACK_DECISION_ID,
-    FALLBACK_ID,
     OWNER,
-    PRIMARY_DECISION_ID,
     PRIMARY_ID,
     make_budget_state,
     make_decision,
@@ -559,8 +555,13 @@ def test_replan_rejects_previous_binding_and_admission_anomalies() -> None:
 
 
 def test_replan_rejects_invalid_unavailable_collection() -> None:
-    with pytest.raises(FallbackReplanError, match="unavailable_substrates must be a tuple"):
-        run_replan(unavailable_substrates=cast(tuple[SubstrateId, ...], [PRIMARY_ID]))
+    with pytest.raises(
+        FallbackReplanError,
+        match="unavailable_substrates must be a tuple",
+    ):
+        run_replan(
+            unavailable_substrates=cast(tuple[SubstrateId, ...], [PRIMARY_ID])
+        )
 
     with pytest.raises(FallbackReplanError, match="only SubstrateId"):
         run_replan(unavailable_substrates=cast(tuple[SubstrateId, ...], ("primary",)))
