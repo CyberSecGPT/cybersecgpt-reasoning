@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, and deterministic reasoning lifecycle transitions.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, deterministic reasoning lifecycle transitions, and cancellation/deadline propagation control.
 
 ## Dependency direction
 
@@ -40,7 +40,7 @@ The request contains:
 
 Admission is structural control, not security-policy evaluation. It requires an already-authoritative `RoutingSecurityBinding`; it does not authenticate an actor, mint or validate a grant, evaluate target scope, derive effective data classification, widen provider/network permissions, or authorize a side effect. Source-provided classification is retained only as untrusted metadata and is never copied into the authoritative effective-classification field by this layer.
 
-The envelope carries compute/memory/latency ceilings for later routing and runtime enforcement. This slice does not itself implement device-resource enforcement, cancellation propagation, or runtime deadline clocks; generic execution primitives remain owned by `cybersecgpt-runtime` under ADR-0011.
+The envelope carries compute/memory/latency ceilings and absolute deadline metadata for later control. Generic device/resource enforcement and component-specific stop mechanisms remain owned by runtime/execution components under ADR-0011; the Reasoning-owned termination contract below coordinates stop requirements and acknowledgements without implementing those mechanisms.
 
 ## Validated substrate discovery
 
@@ -246,12 +246,54 @@ The initial transition graph is deliberately conservative:
 
 The `EXECUTING_AUTHORIZED_TOOL` state is descriptive control metadata, not permission. The lifecycle layer does not authenticate policy state, evaluate authorization, invoke a tool, or permit a side effect. Privileged execution must still use the authoritative external policy/authorization path and current routing/security revalidation.
 
-Terminal `CANCELLED` prevents further lifecycle transitions. This slice does not yet propagate cancellation signals to active model/tool/retrieval/verifier components and does not implement deadline clocks; those remain separate P5 integration work.
+Terminal lifecycle state remains final. Cancellation/deadline propagation does not reopen a terminal lifecycle or mutate its prior snapshots; it provides a separate immutable safe-stop control record for active external work.
+
+## Cancellation and deadline propagation
+
+`evaluate_termination_requirement` evaluates the current request/lifecycle control state at one UTC observation time and binds the result to the admitted request identity, routing-decision identity, and correlation identity.
+
+The stop precedence is deterministic:
+
+1. a terminal lifecycle is already stop-required and produces `TERMINAL_STATE` control metadata;
+2. for active work, any reached cancellation timestamp or request deadline is considered; and
+3. when both cancellation and deadline have been reached, the earliest stop condition determines whether the reason is `CANCELLATION` or `DEADLINE`.
+
+A `TerminationRequirement` with `required=False` means only that this termination layer has not observed a stop condition at that time. It never authorizes execution or a side effect.
+
+For active cancellation/deadline conditions, `begin_termination_propagation` creates immutable stop-control state over an explicit snapshot of `TerminationTarget` values. Target kinds cover active model, retrieval, tool, and verifier work. Each target records substrate identity plus whether the external work is side-effect-capable and whether cleanup is required. The target does not grant cleanup or continuation permission.
+
+`TerminationPropagation` records:
+
+- request, routing-decision, and correlation identity;
+- cancellation/deadline reason and trigger time;
+- propagation start and propagation deadline;
+- deterministically ordered active targets;
+- immutable external acknowledgements; and
+- a monotonic acknowledgement sequence.
+
+Once propagation exists, `blocks_new_side_effects` is always true. Actual process/thread/model-request cancellation, transport signalling, sandbox interruption, tool interruption, rollback, and cleanup execution remain responsibilities of runtime/tool/model owners rather than Reasoning.
+
+External owners report `TerminationAcknowledgement` values with `STOPPED`, `CLEANUP_PENDING`, or `FAILED_TO_STOP`. A stopped acknowledgement must preserve evidence or explicitly state that evidence preservation is not applicable. Cleanup-pending work carries an external cleanup-authorization reference; Reasoning records that reference but does not authenticate it or authorize cleanup.
+
+`acknowledge_termination_target` rejects acknowledgements that are malformed, duplicated, for an undeclared target, or timestamped before propagation began. Every accepted acknowledgement creates a new immutable propagation snapshot and increments sequence exactly once.
+
+`evaluate_termination_propagation` reports deterministic aggregate state:
+
+- `COMPLETE` only when every target is stopped and no cleanup remains pending;
+- `FAILED` when any target reports failure to stop;
+- `PENDING` otherwise;
+- target refs still pending;
+- target refs awaiting cleanup;
+- failed target refs;
+- late acknowledgement refs; and
+- whether the propagation deadline has been exceeded before successful completion.
+
+Safe-stop propagation may still be created or continued when the routing decision has subsequently expired. Routing expiry/revocation cannot be used to justify leaving already-active work running. This exception is one-way: termination state never revalidates a stale routing decision, grants permission, enlarges scope, extends a deadline/resource budget, or permits a new side effect.
 
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, or lifecycle transitions.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, lifecycle transitions, or termination propagation control.
 
 ## Future P5 slices
 
-Later P5 work may add cancellation/deadline propagation, fallback replanning, and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+Later P5 work may add fallback replanning and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
