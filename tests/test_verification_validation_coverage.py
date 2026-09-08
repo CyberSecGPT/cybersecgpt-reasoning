@@ -68,14 +68,13 @@ def test_scalar_validators_cover_all_fail_closed_branches() -> None:
         verification_module._require_tokens(
             ("same", "same"), field_name="tokens", allow_empty=True
         )
-    assert verification_module._require_tokens(
-        (), field_name="tokens", allow_empty=True
-    ) == ()
+    assert (
+        verification_module._require_tokens((), field_name="tokens", allow_empty=True)
+        == ()
+    )
 
     with pytest.raises(VerificationOrchestrationError, match="must be a tuple"):
-        verification_module._require_references(
-            [], field_name="refs", allow_empty=True
-        )
+        verification_module._require_references([], field_name="refs", allow_empty=True)
     with pytest.raises(VerificationOrchestrationError, match="must not be empty"):
         verification_module._require_references(
             (), field_name="refs", allow_empty=False
@@ -84,9 +83,10 @@ def test_scalar_validators_cover_all_fail_closed_branches() -> None:
         verification_module._require_references(
             ("same", "same"), field_name="refs", allow_empty=True
         )
-    assert verification_module._require_references(
-        (), field_name="refs", allow_empty=True
-    ) == ()
+    assert (
+        verification_module._require_references((), field_name="refs", allow_empty=True)
+        == ()
+    )
 
     for value in ("1", True, 0, -1):
         with pytest.raises(VerificationOrchestrationError, match="positive integer"):
@@ -96,9 +96,7 @@ def test_scalar_validators_cover_all_fail_closed_branches() -> None:
     with pytest.raises(VerificationOrchestrationError, match="must be a datetime"):
         verification_module._require_utc_datetime("now", field_name="at")
     with pytest.raises(VerificationOrchestrationError, match="timezone-aware UTC"):
-        verification_module._require_utc_datetime(
-            datetime(2026, 9, 8), field_name="at"
-        )
+        verification_module._require_utc_datetime(datetime(2026, 9, 8), field_name="at")
     non_utc = datetime(
         2026,
         9,
@@ -111,10 +109,7 @@ def test_scalar_validators_cover_all_fail_closed_branches() -> None:
 
 def test_verification_policy_rejects_invalid_control_fields() -> None:
     policy = make_verification_policy()
-    assert (
-        policy.independence_requirement
-        is VerificationIndependenceRequirement.NONE
-    )
+    assert policy.independence_requirement is VerificationIndependenceRequirement.NONE
     with pytest.raises(
         VerificationOrchestrationError,
         match="independence_requirement",
