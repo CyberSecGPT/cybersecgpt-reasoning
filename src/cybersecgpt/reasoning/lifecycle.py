@@ -126,6 +126,7 @@ _ALLOWED_TRANSITIONS: dict[ReasoningState, frozenset[ReasoningState]] = {
     ),
     ReasoningState.VERIFYING: frozenset(
         {
+            ReasoningState.VERIFYING,
             ReasoningState.REVISING,
             ReasoningState.COMPLETED,
             *_COMMON_STOP_STATES,
