@@ -2,7 +2,7 @@
 
 ## Security boundary
 
-`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, reasoning state, termination propagation, and fallback replanning as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
+`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, reasoning state, termination propagation, fallback replanning, and verifier orchestration as control/proposal/evidence metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
 
 ## Required properties
 
@@ -59,6 +59,15 @@
 - return explicit no-valid-route state when every permitted fallback is exhausted rather than relaxing policy or selecting an unapproved provider;
 - block fallback replanning when an active cancellation/deadline termination requirement exists;
 - never treat fallback policy, fallback result, replacement routing metadata, remaining budget, or route availability as authorization;
+- require verifier selection to use the current validated capability snapshot and a candidate policy restricted to verifier substrates;
+- exclude the producing substrate from verifier selection and enforce deterministic/distinct-owner independence requirements from machine-evaluable descriptor metadata;
+- bind verifier orchestration to the admitted request, correlation identity, current routing/security state, exact capability snapshot, `VERIFYING` lifecycle, cancellation state, and effective deadline;
+- require every recorded verifier observation to come from a currently selected validated verifier and cover a required assertion without duplicating a verifier/assertion pair;
+- consume exactly one routing-bound verifier pass for each admitted observation and reject verification policies or observations that exceed the admitted ceiling;
+- accept support only from catalogued evidence references satisfying the required evidence classes, supporting-verifier count, and independence policy;
+- keep generation status separate from verification status and preserve explicit unsupported, contradictory, insufficient-evidence, policy-blocked, cancelled, deadline, resource-limit, and verification-error outcomes;
+- never promote contradictory, unsupported, insufficient-evidence, cancelled, deadline, resource-limit, policy-blocked, or verification-error state to `SUPPORTED`;
+- never treat verifier output, agreement, evidence references, verification status, or human-review metadata as authorization, target-scope permission, or authority to weaken classification, provider/network, offline, deadline, budget, or verification controls;
 - never treat candidate agreement, remaining budget, lifecycle state, termination state, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
@@ -72,6 +81,8 @@ Candidate selection consumes only admitted request state, validated discovery st
 Cancellation/deadline propagation is Reasoning-owned control metadata for determining that active work must stop and for collecting structured external stop/cleanup acknowledgements. It does not send process signals, cancel model-serving requests, execute tools, perform cleanup, authenticate cleanup authorization, or replace side-effect-boundary policy revalidation. A termination requirement that is not currently active is also not an authorization result.
 
 Fallback replanning is a Reasoning-owned fresh-route control operation. It may narrow routing choices and preserve cumulative budget state, but it cannot widen security or resource boundaries, create a grant, change authoritative classification, silently enable a provider/network class, execute the replacement substrate, or authorize a side effect. A failed native route therefore never implies permission to use a remote or externally owned provider.
+
+Verifier orchestration is Reasoning-owned selection, accounting, observation-admission, and aggregation control. It does not execute verifiers, retrieve or authenticate evidence, establish target scope, evaluate authoritative policy, grant permission, or perform side effects. External runtime and evidence owners remain responsible for execution and provenance, and privileged consumers must independently enforce current authorization and security policy.
 
 ## Reporting a vulnerability
 
