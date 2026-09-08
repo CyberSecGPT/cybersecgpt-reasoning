@@ -24,4 +24,8 @@
 - Deterministic immutable reasoning lifecycle snapshots with correlation identity, monotonic sequence, transition cause, and routing-bound budget usage.
 - Explicit state-transition policy with terminal-state lockout and policy-gated entry to the authorized-tool execution state.
 - Shared Foundation `CorrelationId` enforced for reasoning lifecycle correlation identity.
+- Deterministic cancellation/deadline stop evaluation bound to admitted request, routing-decision, lifecycle, and correlation identities.
+- Immutable active-component `TerminationTarget`, `TerminationPropagation`, and external `TerminationAcknowledgement` control contracts for model, retrieval, tool, and verifier work.
+- Monotonic stop acknowledgement sequencing with explicit pending, cleanup-pending, failed-to-stop, late, and propagation-deadline visibility.
+- A fail-closed termination invariant that blocks new side effects after propagation starts while leaving actual stop/cleanup execution and authorization to their owning runtime/security boundaries.
 - Python 3.11–3.13 CI with strict static, security, coverage, build, and distribution checks.
