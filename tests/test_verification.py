@@ -262,8 +262,7 @@ def test_contradiction_can_never_be_reported_as_supported() -> None:
 
     assert result.status is VerificationStatus.CONTRADICTORY
     assert (
-        result.assertion_results[0].status
-        is VerificationAssertionStatus.CONTRADICTORY
+        result.assertion_results[0].status is VerificationAssertionStatus.CONTRADICTORY
     )
     assert result.contradictions == ("contradiction:evidence:2",)
 
