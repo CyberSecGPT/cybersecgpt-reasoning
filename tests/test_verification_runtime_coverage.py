@@ -425,9 +425,7 @@ def test_record_rejects_removed_and_reclassified_verifier() -> None:
     item = observation()
     termination = make_termination(request, decision, item.observed_at)
 
-    without_a = make_snapshot(
-        make_verifier(VERIFIER_B, owner="CyberSecGPT/verifier-b")
-    )
+    without_a = make_snapshot(make_verifier(VERIFIER_B, owner="CyberSecGPT/verifier-b"))
     with pytest.raises(VerificationOrchestrationError, match="current validated"):
         record_verifier_observation(
             state,
