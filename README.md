@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, deterministic lifecycle control, cancellation/deadline propagation control, and deterministic fallback replanning.**
+**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, deterministic lifecycle control, cancellation/deadline propagation control, deterministic fallback replanning, and deterministic verifier orchestration.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -146,9 +146,19 @@ A successful outcome creates a fresh `RoutingDecisionId` and a replacement budge
 
 `FallbackReplanResult`, the fallback policy, candidate selection, and replacement decision remain control metadata—not authorization. Current authoritative security, target-scope, grant, and privileged side-effect checks remain external and must still be enforced at their owning boundaries.
 
+### Deterministic verifier orchestration
+
+`begin_verification_orchestration`, `record_verifier_observation`, and `finalize_verification` provide immutable Reasoning-owned control for selecting validated verifier substrates, recording externally produced observations, consuming one routing-bound verifier pass per observation, and aggregating explicit assertion and overall verification outcomes.
+
+Verifier selection reuses the current validated capability snapshot and a `CandidateSelectionPolicy` restricted to `SubstrateKind.VERIFIER`. Policies can require deterministic verifiers, ownership independence from the producing substrate, minimum supporting-verifier counts, evidence classes, bounded verifier passes, deadlines, and human review. Self-verification is excluded whenever a producing substrate identity is supplied.
+
+Every operation revalidates request, correlation, routing-decision, current security binding, capability-snapshot, lifecycle, cancellation, deadline, and budget state. Only catalogued evidence references contribute to support. Contradictory, unsupported, insufficient-evidence, cancelled, deadline, resource-limit, policy-blocked, or verification-error state is kept explicit and cannot be promoted to `SUPPORTED`.
+
+Verification status remains separate from generation status. Reasoning does not execute verifiers, retrieve or authenticate evidence, grant authorization, evaluate target scope, or perform privileged side effects; verifier observations and results are non-authorizing control/evidence metadata.
+
 ## Native independence
 
-Core request admission, substrate discovery, candidate selection, routing, budget, lifecycle, termination, and fallback control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, substrate discovery, candidate selection, routing, budget, lifecycle, termination, fallback, and verifier-orchestration control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 
