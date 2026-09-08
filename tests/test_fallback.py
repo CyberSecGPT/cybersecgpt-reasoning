@@ -396,7 +396,7 @@ def test_fallback_policy_cannot_widen_candidate_policy(
         ({"safety_impact": "high"}, "safety_impact"),
         ({"source_data_classification": "claimed"}, "source_data_classification"),
         ({"identity_context_ref": "identity:2"}, "identity_context_ref"),
-        ({"input_json": "{\"a\":1}"}, "input_json"),
+        ({"input_json": '{"a":1}'}, "input_json"),
         ({"max_latency_ms": 1001}, "max_latency_ms"),
         ({"max_compute_units": 9}, "max_compute_units"),
         ({"max_memory_bytes": 8193}, "max_memory_bytes"),
