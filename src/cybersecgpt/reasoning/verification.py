@@ -139,7 +139,9 @@ def _require_tokens(
     if not allow_empty and not values:
         raise VerificationOrchestrationError(f"{field_name} must not be empty")
     if len(set(values)) != len(values):
-        raise VerificationOrchestrationError(f"{field_name} must not contain duplicates")
+        raise VerificationOrchestrationError(
+            f"{field_name} must not contain duplicates"
+        )
     return values
 
 
@@ -157,7 +159,9 @@ def _require_references(
     if not allow_empty and not values:
         raise VerificationOrchestrationError(f"{field_name} must not be empty")
     if len(set(values)) != len(values):
-        raise VerificationOrchestrationError(f"{field_name} must not contain duplicates")
+        raise VerificationOrchestrationError(
+            f"{field_name} must not contain duplicates"
+        )
     return values
 
 
@@ -398,7 +402,8 @@ class VerificationOrchestrationState:
             for item in self.evidence_catalog
         ):
             raise VerificationOrchestrationError(
-                "evidence_catalog must contain only VerificationEvidenceReference values"
+                "evidence_catalog must contain only "
+                "VerificationEvidenceReference values"
             )
         evidence_ids = tuple(item.evidence_ref for item in self.evidence_catalog)
         if len(set(evidence_ids)) != len(evidence_ids):
@@ -484,7 +489,11 @@ class VerificationResult:
             raise VerificationOrchestrationError(
                 "assertion_results must contain only VerificationAssertionResult values"
             )
-        _require_references(self.evidence_refs, field_name="evidence_refs", allow_empty=True)
+        _require_references(
+            self.evidence_refs,
+            field_name="evidence_refs",
+            allow_empty=True,
+        )
         if not isinstance(self.verifier_identities, tuple):
             raise VerificationOrchestrationError("verifier_identities must be a tuple")
         if not all(isinstance(item, SubstrateId) for item in self.verifier_identities):
@@ -535,7 +544,9 @@ class VerificationResult:
                 )
 
 
-def _snapshot_by_id(snapshot: CapabilitySnapshot) -> dict[SubstrateId, ValidatedSubstrate]:
+def _snapshot_by_id(
+    snapshot: CapabilitySnapshot,
+) -> dict[SubstrateId, ValidatedSubstrate]:
     return {item.descriptor.substrate_id: item for item in snapshot.substrates}
 
 
@@ -612,7 +623,10 @@ def _validate_termination_requirement(
         )
 
 
-def _effective_deadline(request: BrainRequest, policy: VerificationPolicy) -> datetime | None:
+def _effective_deadline(
+    request: BrainRequest,
+    policy: VerificationPolicy,
+) -> datetime | None:
     deadlines = tuple(
         item for item in (request.deadline, policy.deadline) if item is not None
     )
@@ -744,7 +758,10 @@ def begin_verification_orchestration(
     deadline = _effective_deadline(request, verification_policy)
     if deadline is not None and now >= deadline:
         raise VerificationOrchestrationError("verification deadline has been reached")
-    if verification_policy.max_verifier_passes > decision.reasoning_budget.max_verifier_passes:
+    if (
+        verification_policy.max_verifier_passes
+        > decision.reasoning_budget.max_verifier_passes
+    ):
         raise VerificationOrchestrationError(
             "verification policy cannot exceed admitted verifier-pass budget"
         )
@@ -861,7 +878,10 @@ def record_verifier_observation(
         )
     by_id = _snapshot_by_id(snapshot)
     verifier = by_id.get(observation.verifier_id)
-    if verifier is None or verifier.descriptor.substrate_kind is not SubstrateKind.VERIFIER:
+    if (
+        verifier is None
+        or verifier.descriptor.substrate_kind is not SubstrateKind.VERIFIER
+    ):
         raise VerificationOrchestrationError(
             "observation verifier must be a current validated VERIFIER substrate"
         )
@@ -877,7 +897,10 @@ def record_verifier_observation(
         raise VerificationOrchestrationError(
             "observation references evidence outside the admitted evidence catalog"
         )
-    if state.lifecycle.budget_state.usage.verifier_passes >= state.policy.max_verifier_passes:
+    if (
+        state.lifecycle.budget_state.usage.verifier_passes
+        >= state.policy.max_verifier_passes
+    ):
         raise VerificationOrchestrationError(
             "verification policy verifier-pass ceiling has been reached"
         )
@@ -914,11 +937,17 @@ def _assertion_result(
     relevant = tuple(item for item in observations if item.assertion_id == assertion_id)
     supporting = tuple(
         sorted(
-            {item.verifier_id for item in relevant if item.status is VerificationAssertionStatus.SUPPORTED},
+            {
+                item.verifier_id
+                for item in relevant
+                if item.status is VerificationAssertionStatus.SUPPORTED
+            },
             key=lambda item: item.value,
         )
     )
-    evidence_refs = tuple(sorted({ref for item in relevant for ref in item.evidence_refs}))
+    evidence_refs = tuple(
+        sorted({ref for item in relevant for ref in item.evidence_refs})
+    )
     contradictions = tuple(
         sorted({ref for item in relevant for ref in item.contradictions})
     )
@@ -940,7 +969,11 @@ def _assertion_result(
         }
         enough_support = len(supporting) >= policy.minimum_supporting_verifiers
         independence_ok = _independence_satisfied(supporting, policy, snapshot)
-        if enough_support and required_classes.issubset(observed_classes) and independence_ok:
+        if (
+            enough_support
+            and required_classes.issubset(observed_classes)
+            and independence_ok
+        ):
             status = VerificationAssertionStatus.SUPPORTED
         else:
             status = VerificationAssertionStatus.INSUFFICIENT_EVIDENCE
@@ -1068,7 +1101,10 @@ def finalize_verification(
         sorted({ref for item in state.observations for ref in item.evidence_refs})
     )
     verifier_identities = tuple(
-        sorted({item.verifier_id for item in state.observations}, key=lambda item: item.value)
+        sorted(
+            {item.verifier_id for item in state.observations},
+            key=lambda item: item.value,
+        )
     )
     method_versions = tuple(
         sorted(
