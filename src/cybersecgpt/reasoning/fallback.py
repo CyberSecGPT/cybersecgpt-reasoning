@@ -338,7 +338,8 @@ def _validate_fallback_policy_narrowing(
         )
     if fallback_policy.allow_degraded and not candidate_policy.allow_degraded:
         raise FallbackReplanError(
-            "fallback policy cannot enable degraded routes disallowed by candidate policy"
+            "fallback policy cannot enable degraded routes "
+            "disallowed by candidate policy"
         )
     if (
         fallback_policy.max_selected_substrates
@@ -378,7 +379,10 @@ def _validate_request_continuity(
         "identity_context_ref",
         "input_json",
     ):
-        if getattr(previous_request, field_name) != getattr(current_request, field_name):
+        if getattr(previous_request, field_name) != getattr(
+            current_request,
+            field_name,
+        ):
             raise FallbackReplanError(
                 f"fallback cannot change request field: {field_name}"
             )
@@ -399,7 +403,10 @@ def _validate_request_continuity(
         current_accuracy is None or current_accuracy < previous_accuracy
     ):
         raise FallbackReplanError("fallback cannot lower required_accuracy")
-    if previous_request.required_determinism and not current_request.required_determinism:
+    if (
+        previous_request.required_determinism
+        and not current_request.required_determinism
+    ):
         raise FallbackReplanError("fallback cannot remove required determinism")
     if (
         previous_request.required_explainability
@@ -434,7 +441,10 @@ def _validate_request_continuity(
             "fallback cannot change effective data classification without "
             "an explicit architecture-supported ordering"
         )
-    if current_binding.provider_network_policy != previous_binding.provider_network_policy:
+    if (
+        current_binding.provider_network_policy
+        != previous_binding.provider_network_policy
+    ):
         raise FallbackReplanError("fallback cannot change provider/network policy")
     if previous_binding.offline_required and not current_binding.offline_required:
         raise FallbackReplanError("fallback cannot relax offline requirement")
@@ -688,7 +698,9 @@ def replan_fallback_route(
         field_name="replacement_expires_at",
     )
     if expires_at <= now:
-        raise FallbackReplanError("replacement_expires_at must be later than observed_at")
+        raise FallbackReplanError(
+            "replacement_expires_at must be later than observed_at"
+        )
 
     if previous_decision.security_binding != previous_request.security_binding:
         raise FallbackReplanError(
