@@ -29,8 +29,16 @@ from cybersecgpt.reasoning import (
     TerminationRequirement,
     replan_fallback_route,
 )
+from cybersecgpt.reasoning.fallback import _fallback_rank_key, _with_fallback_selection
 
-from .test_candidates import NOW, make_binding, make_policy, make_request, make_snapshot
+from .test_candidates import (
+    NOW,
+    make_binding,
+    make_policy,
+    make_request,
+    make_resource,
+    make_snapshot,
+)
 from .test_fallback import (
     FALLBACK_DECISION_ID,
     OWNER,
@@ -196,6 +204,16 @@ def test_result_rejects_candidate_request_mismatch() -> None:
     values = _result_values(result)
     values["candidate_selection"] = mismatched
     with pytest.raises(FallbackReplanError, match="candidate_selection request_id"):
+        FallbackReplanResult(**values)  # type: ignore[arg-type]
+
+
+def test_route_selected_requires_selected_fallback_substrates() -> None:
+    result = _successful_result()
+    empty_selection = _with_fallback_selection(result.candidate_selection, ())
+    assert RoutingDecisionReasonCode.CAPABILITY_MATCH not in empty_selection.reason_codes
+    values = _result_values(result)
+    values["candidate_selection"] = empty_selection
+    with pytest.raises(FallbackReplanError, match="requires selected fallback substrates"):
         FallbackReplanResult(**values)  # type: ignore[arg-type]
 
 
@@ -485,9 +503,13 @@ def test_replan_rejects_invalid_public_argument_types_and_times() -> None:
             replacement_expires_at=NOW + timedelta(minutes=2),
         )
 
+    restricted = list(base)
+    restricted[6] = make_fallback_policy(
+        allowed_triggers=(FallbackTrigger.PRIMARY_ROUTE_UNAVAILABLE,),
+    )
     with pytest.raises(FallbackReplanError, match="not allowed"):
         replan_fallback_route(
-            *base,  # type: ignore[arg-type]
+            *restricted,  # type: ignore[arg-type]
             trigger=FallbackTrigger.UNCERTAINTY_ESCALATION,
             unavailable_substrates=(),
             current_binding=request.security_binding,
@@ -566,6 +588,15 @@ def test_replan_rejects_invalid_unavailable_collection() -> None:
 
     with pytest.raises(FallbackReplanError, match="duplicates"):
         run_replan(unavailable_substrates=(PRIMARY_ID, PRIMARY_ID))
+
+
+def test_fallback_rank_rejects_unbounded_latency() -> None:
+    unbounded = make_fallback_descriptor(
+        resource_profile=make_resource(max_latency_ms=None),
+    )
+    substrate = make_snapshot(unbounded).substrates[0]
+    with pytest.raises(FallbackReplanError, match="unbounded latency"):
+        _fallback_rank_key(substrate)
 
 
 def test_fallback_filters_kind_network_and_degraded_constraints() -> None:
