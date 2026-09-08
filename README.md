@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, and deterministic lifecycle control.**
+**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, deterministic lifecycle control, and cancellation/deadline propagation control.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -26,7 +26,7 @@ The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecG
 
 `admit_brain_request` serializes raw input through Foundation's defensive JSON bounds before constructing the immutable request. Admission rejects request/security-binding identity mismatch, malformed metadata, invalid resource/deadline state, duplicate verification requirements, and noncanonical direct JSON construction.
 
-This admission contract is **not** an authorization or classification engine. It consumes an already-authoritative `RoutingSecurityBinding`; it does not authenticate identity, mint a grant, evaluate target scope, derive or lower effective data classification, or authorize a side effect. Runtime enforcement of device/compute/memory/cancellation primitives remains outside this slice.
+This admission contract is **not** an authorization or classification engine. It consumes an already-authoritative `RoutingSecurityBinding`; it does not authenticate identity, mint a grant, evaluate target scope, derive or lower effective data classification, or authorize a side effect. Runtime enforcement of device/compute/memory primitives and component-specific stop mechanisms remains outside request admission.
 
 ### Validated substrate discovery
 
@@ -105,11 +105,29 @@ A larger budget therefore requires a fresh routing decision before the routing-b
 
 `begin_reasoning_lifecycle` starts at `ADMITTED` with sequence zero. `transition_reasoning_state` increments the sequence by exactly one, applies a bounded routing-bound budget delta, and enforces the explicit transition graph. Terminal states (`COMPLETED`, `DEFERRED`, `DENIED`, `FAILED`, `CANCELLED`) cannot transition again.
 
-`EXECUTING_AUTHORIZED_TOOL` is reachable only from `AWAITING_POLICY`, but the state name is still **not authorization**. This repository does not mint or validate the external grant required for a privileged tool side effect. Cancellation propagation to active components and deadline clocks are intentionally not implemented in this slice.
+`EXECUTING_AUTHORIZED_TOOL` is reachable only from `AWAITING_POLICY`, but the state name is still **not authorization**. This repository does not mint or validate the external grant required for a privileged tool side effect.
+
+### Cancellation and deadline propagation
+
+`evaluate_termination_requirement` deterministically binds cancellation, request deadline, terminal lifecycle state, request identity, routing-decision identity, and correlation identity into immutable `TerminationRequirement` control metadata. An inactive requirement means only that this termination layer has not observed a stop condition; it is never permission to execute.
+
+When cancellation or a request deadline requires active work to stop, `begin_termination_propagation` creates an immutable `TerminationPropagation` over explicitly declared `TerminationTarget` records for active model, retrieval, tool, and verifier work. Targets carry only stop/cleanup control metadata; Reasoning does not send OS/process signals, cancel model servers, execute tools, or perform cleanup itself.
+
+External runtime owners report immutable `TerminationAcknowledgement` values. The Reasoning layer:
+
+- rejects duplicate, unknown, cross-propagation, or pre-start acknowledgements;
+- keeps acknowledgement sequencing monotonic and deterministic;
+- distinguishes `STOPPED`, `CLEANUP_PENDING`, and `FAILED_TO_STOP`;
+- requires stopped work to preserve evidence or explicitly mark evidence as not applicable;
+- keeps cleanup authorization as an external reference rather than granting cleanup permission;
+- reports pending, cleanup-pending, failed, late, and propagation-deadline state; and
+- enforces the invariant that an active termination propagation blocks new side effects.
+
+Safe-stop propagation is allowed even when a routing decision has subsequently expired: expiry or revocation must not become a reason to keep active work running. The termination contract itself cannot authorize continuation, cleanup, or any new side effect.
 
 ## Native independence
 
-Core request admission, substrate discovery, candidate selection, routing, budget, and lifecycle control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, substrate discovery, candidate selection, routing, budget, lifecycle, and termination control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 
