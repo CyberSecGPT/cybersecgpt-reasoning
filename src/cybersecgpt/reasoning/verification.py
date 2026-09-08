@@ -318,12 +318,8 @@ class VerificationAssertionResult:
                 "status must be a VerificationAssertionStatus"
             )
         if not isinstance(self.supporting_verifiers, tuple):
-            raise VerificationOrchestrationError(
-                "supporting_verifiers must be a tuple"
-            )
-        if not all(
-            isinstance(item, SubstrateId) for item in self.supporting_verifiers
-        ):
+            raise VerificationOrchestrationError("supporting_verifiers must be a tuple")
+        if not all(isinstance(item, SubstrateId) for item in self.supporting_verifiers):
             raise VerificationOrchestrationError(
                 "supporting_verifiers must contain only SubstrateId values"
             )
@@ -838,9 +834,7 @@ def record_verifier_observation(
             "state routing_decision_id must match decision"
         )
     if state.correlation_id != request.correlation_id:
-        raise VerificationOrchestrationError(
-            "state correlation_id must match request"
-        )
+        raise VerificationOrchestrationError("state correlation_id must match request")
     _validate_termination_requirement(
         termination_requirement,
         request=request,
@@ -1069,9 +1063,7 @@ def finalize_verification(
             "state routing_decision_id must match decision"
         )
     if state.correlation_id != request.correlation_id:
-        raise VerificationOrchestrationError(
-            "state correlation_id must match request"
-        )
+        raise VerificationOrchestrationError("state correlation_id must match request")
 
     evidence_by_ref = {item.evidence_ref: item for item in state.evidence_catalog}
     assertion_results = tuple(
