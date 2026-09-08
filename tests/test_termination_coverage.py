@@ -30,7 +30,10 @@ from tests.test_termination import (
 
 
 def test_target_rejects_non_string_machine_token() -> None:
-    with pytest.raises(TerminationPropagationError, match="target_ref must be a string"):
+    with pytest.raises(
+        TerminationPropagationError,
+        match="target_ref must be a string",
+    ):
         TerminationTarget(
             target_ref=cast(str, 1),
             substrate_id=SubstrateId("model:native-general"),
