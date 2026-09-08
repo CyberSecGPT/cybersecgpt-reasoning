@@ -11,6 +11,7 @@ EXPECTED_SOURCE_MEMBERS = frozenset(
         "cybersecgpt/reasoning/budget.py",
         "cybersecgpt/reasoning/candidates.py",
         "cybersecgpt/reasoning/errors.py",
+        "cybersecgpt/reasoning/fallback.py",
         "cybersecgpt/reasoning/lifecycle.py",
         "cybersecgpt/reasoning/request.py",
         "cybersecgpt/reasoning/routing.py",
