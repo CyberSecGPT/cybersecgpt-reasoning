@@ -111,9 +111,7 @@ def _require_unique_texts(
     if not isinstance(value, tuple):
         raise FallbackReplanError(f"{field_name} must be a tuple")
     validator = _require_token if tokenized else _require_text
-    values = tuple(
-        validator(item, field_name=f"{field_name} item") for item in value
-    )
+    values = tuple(validator(item, field_name=f"{field_name} item") for item in value)
     if not allow_empty and not values:
         raise FallbackReplanError(f"{field_name} must not be empty")
     if len(set(values)) != len(values):
@@ -194,9 +192,7 @@ class FallbackReplanPolicy:
                 "max_selected_substrates must be a positive integer"
             )
         if not isinstance(self.allow_previous_substrate_reuse, bool):
-            raise FallbackReplanError(
-                "allow_previous_substrate_reuse must be a bool"
-            )
+            raise FallbackReplanError("allow_previous_substrate_reuse must be a bool")
 
 
 @dataclass(frozen=True, slots=True)
@@ -430,9 +426,7 @@ def _validate_request_continuity(
         current_binding.authorization_context_id
         != previous_binding.authorization_context_id
     ):
-        raise FallbackReplanError(
-            "fallback cannot substitute authorization context"
-        )
+        raise FallbackReplanError("fallback cannot substitute authorization context")
     if (
         current_binding.effective_data_classification
         != previous_binding.effective_data_classification
@@ -558,9 +552,7 @@ def _select_fallback_substrates(
     fallback_policy: FallbackReplanPolicy,
     unavailable_substrates: tuple[SubstrateId, ...],
 ) -> tuple[SubstrateId, ...]:
-    evaluation_by_id = {
-        item.substrate_id: item for item in base_selection.evaluations
-    }
+    evaluation_by_id = {item.substrate_id: item for item in base_selection.evaluations}
     excluded = set(unavailable_substrates)
     if not fallback_policy.allow_previous_substrate_reuse:
         excluded.update(previous_decision.selected_substrates)
@@ -675,9 +667,7 @@ def replan_fallback_route(
     if not isinstance(snapshot, CapabilitySnapshot):
         raise FallbackReplanError("snapshot must be a CapabilitySnapshot")
     if not isinstance(candidate_policy, CandidateSelectionPolicy):
-        raise FallbackReplanError(
-            "candidate_policy must be a CandidateSelectionPolicy"
-        )
+        raise FallbackReplanError("candidate_policy must be a CandidateSelectionPolicy")
     if not isinstance(fallback_policy, FallbackReplanPolicy):
         raise FallbackReplanError("fallback_policy must be a FallbackReplanPolicy")
     if not isinstance(trigger, FallbackTrigger):
@@ -685,9 +675,7 @@ def replan_fallback_route(
     if trigger not in fallback_policy.allowed_triggers:
         raise FallbackReplanError("fallback trigger is not allowed by fallback policy")
     if not isinstance(current_binding, RoutingSecurityBinding):
-        raise FallbackReplanError(
-            "current_binding must be a RoutingSecurityBinding"
-        )
+        raise FallbackReplanError("current_binding must be a RoutingSecurityBinding")
     if not isinstance(new_decision_id, RoutingDecisionId):
         raise FallbackReplanError("new_decision_id must be a RoutingDecisionId")
     if new_decision_id == previous_decision.decision_id:
@@ -742,16 +730,18 @@ def replan_fallback_route(
         )
     unavailable_values = tuple(item.value for item in unavailable_substrates)
     if len(set(unavailable_values)) != len(unavailable_values):
-        raise FallbackReplanError(
-            "unavailable_substrates must not contain duplicates"
-        )
+        raise FallbackReplanError("unavailable_substrates must not contain duplicates")
     ordered_unavailable = tuple(
         sorted(unavailable_substrates, key=lambda item: item.value)
     )
-    if trigger in {
-        FallbackTrigger.PRIMARY_ROUTE_UNAVAILABLE,
-        FallbackTrigger.ROUTE_EXECUTION_FAILURE,
-    } and not ordered_unavailable:
+    if (
+        trigger
+        in {
+            FallbackTrigger.PRIMARY_ROUTE_UNAVAILABLE,
+            FallbackTrigger.ROUTE_EXECUTION_FAILURE,
+        }
+        and not ordered_unavailable
+    ):
         raise FallbackReplanError(
             "route failure fallback requires an unavailable substrate identity"
         )
