@@ -4,7 +4,7 @@
 
 ## Status
 
-**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, deterministic lifecycle control, and cancellation/deadline propagation control.**
+**P5 executable bootstrap — normalized request admission, validated substrate discovery, deterministic candidate selection, routing validity, bounded reasoning budgets, routing-budget binding, deterministic lifecycle control, cancellation/deadline propagation control, and deterministic fallback replanning.**
 
 The repository implements boundaries assigned by Accepted ADR-0011 in `CyberSecGPT/cybersecgpt-docs`. It does not own security-policy or authorization decisions, privileged tool execution, native model serving, persistent memory, tokenizer design, training, or model weights.
 
@@ -125,9 +125,30 @@ External runtime owners report immutable `TerminationAcknowledgement` values. Th
 
 Safe-stop propagation is allowed even when a routing decision has subsequently expired: expiry or revocation must not become a reason to keep active work running. The termination contract itself cannot authorize continuation, cleanup, or any new side effect.
 
+### Deterministic fallback replanning
+
+`replan_fallback_route` implements the P5 requirement that a failed or unavailable route is replaced only through a **fresh routing decision** evaluated against current request, capability, routing-policy, security-binding, termination, and budget state.
+
+Fallback behavior is constrained by immutable `FallbackReplanPolicy` metadata. The overlay can only narrow the active candidate policy: substrate kinds, owners, provider/network requirement classes, degraded-route allowance, and fan-out must remain within already-permitted candidate constraints. A primary-route failure therefore cannot silently widen provider/network permissions or activate a proprietary remote provider.
+
+Before selecting a replacement, fallback replanning:
+
+- revalidates the prior routing decision against the current `RoutingSecurityBinding`;
+- preserves request and correlation identity plus task/input continuity;
+- refuses larger latency, compute, memory, deadline, accuracy, determinism, explainability, or verification envelopes;
+- preserves authoritative authorization-context, effective-classification, provider/network, and offline boundaries;
+- rejects active cancellation/deadline termination requirements;
+- excludes explicitly unavailable/failed substrates and, by default, the prior selected substrate set;
+- evaluates candidates against the current capability snapshot and candidate-selection policy; and
+- carries already-consumed reasoning-budget counters into the replacement ledger instead of resetting them.
+
+A successful outcome creates a fresh `RoutingDecisionId` and a replacement budget ledger bound to that new decision. If every permitted fallback is exhausted, the explicit result is `NO_VALID_ROUTE`; the implementation does not relax policy to manufacture a route.
+
+`FallbackReplanResult`, the fallback policy, candidate selection, and replacement decision remain control metadata—not authorization. Current authoritative security, target-scope, grant, and privileged side-effect checks remain external and must still be enforced at their owning boundaries.
+
 ## Native independence
 
-Core request admission, substrate discovery, candidate selection, routing, budget, lifecycle, and termination control have no proprietary-provider SDK dependency and perform no network I/O.
+Core request admission, substrate discovery, candidate selection, routing, budget, lifecycle, termination, and fallback control have no proprietary-provider SDK dependency and perform no network I/O.
 
 ## Development
 
