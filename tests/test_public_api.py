@@ -70,5 +70,18 @@ def test_public_api_is_explicit() -> None:
         "begin_termination_propagation",
         "acknowledge_termination_target",
         "evaluate_termination_propagation",
+        "VerificationOrchestrationError",
+        "VerificationStatus",
+        "VerificationAssertionStatus",
+        "VerificationIndependenceRequirement",
+        "VerificationPolicy",
+        "VerificationEvidenceReference",
+        "VerifierObservation",
+        "VerificationAssertionResult",
+        "VerificationOrchestrationState",
+        "VerificationResult",
+        "begin_verification_orchestration",
+        "record_verifier_observation",
+        "finalize_verification",
     ]
     assert all(hasattr(reasoning, name) for name in reasoning.__all__)
