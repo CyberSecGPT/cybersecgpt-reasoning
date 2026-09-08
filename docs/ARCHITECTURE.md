@@ -6,7 +6,7 @@ This repository implements the Reasoning ownership assigned by Accepted ADR-0011
 
 ## Role
 
-Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, deterministic reasoning lifecycle transitions, and cancellation/deadline propagation control.
+Reasoning owns Intelligence Router control, bounded reasoning budgets, planning/search state, and runtime verifier orchestration. Current executable P5 slices implement normalized request admission, validated substrate discovery, deterministic candidate selection, structured routing-decision validity, bounded discrete reasoning-budget accounting, routing-to-budget binding, deterministic reasoning lifecycle transitions, cancellation/deadline propagation control, and deterministic fallback replanning.
 
 ## Dependency direction
 
@@ -290,10 +290,42 @@ External owners report `TerminationAcknowledgement` values with `STOPPED`, `CLEA
 
 Safe-stop propagation may still be created or continued when the routing decision has subsequently expired. Routing expiry/revocation cannot be used to justify leaving already-active work running. This exception is one-way: termination state never revalidates a stale routing decision, grants permission, enlarges scope, extends a deadline/resource budget, or permits a new side effect.
 
+## Deterministic fallback replanning
+
+`replan_fallback_route` owns the P5 fresh-route fallback control path. It consumes the previous and current normalized request, the prior routing decision and routing-bound budget state, the current capability snapshot, the current candidate-selection policy, one immutable `FallbackReplanPolicy`, the current termination requirement, and the current authoritative `RoutingSecurityBinding`.
+
+Fallback is never mutation of the prior route. A successful replan must use a fresh `RoutingDecisionId`, and the immutable `FallbackReplanResult` links that decision back to the previous decision together with the typed trigger, observation time, previous decision validation, explicitly unavailable substrates, candidate-selection result, and carried budget state.
+
+### Non-widening fallback policy
+
+`FallbackReplanPolicy` is an overlay that may only narrow the current candidate policy. It explicitly constrains:
+
+- permitted fallback triggers;
+- owner references;
+- substrate kinds;
+- provider/network requirement classes;
+- degraded-route allowance;
+- maximum selected substrate count; and
+- whether a previously selected substrate may be reused.
+
+Fallback substrate kinds and network classes must be subsets of the active candidate policy. The fallback fan-out cannot exceed the candidate policy, and fallback cannot enable degraded routing if the candidate policy forbids it. A native-route failure therefore cannot by itself activate a proprietary remote or externally owned provider.
+
+### Request, security, and budget continuity
+
+Before replacement selection, the replanner fails closed unless request identity, correlation identity, task/domain/input state, and the current admitted security binding remain consistent. It rejects widening of latency, compute, memory, deadline, determinism, explainability, verification, or quantitative accuracy constraints. Authoritative authorization context, effective data classification, provider/network policy, and offline requirements cannot be silently substituted or weakened.
+
+The prior routing decision is revalidated against current routing-security state. Active cancellation or deadline termination state blocks replanning. Failed or unavailable substrates are removed deterministically, and the previous selected substrate set is excluded unless the fallback policy explicitly permits reuse.
+
+Candidate selection then runs against the current capability snapshot and current candidate policy. If no permitted fallback remains, the result is `NO_VALID_ROUTE`; the implementation does not relax policy, fabricate capability, or switch providers to avoid explicit exhaustion.
+
+A successful replacement carries the same or a narrower `ReasoningBudget`. Already-consumed candidate, branch-depth, step, model-token, tool-call, retrieval-call, and verifier-pass state is copied into the fresh replacement ledger, so fallback cannot reset cumulative consumption.
+
+Fallback policy and fallback results are **control metadata, not authorization**. They do not authenticate grants, authorize target scope, execute a substrate, call a provider, permit privileged side effects, or replace current side-effect-boundary revalidation.
+
 ## Native independence
 
-The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, lifecycle transitions, or termination propagation control.
+The core package has no proprietary-provider SDK dependency and performs no network I/O. Removing provider credentials does not affect request admission, substrate discovery, candidate selection, routing-decision validation, routing-budget binding, budget accounting, lifecycle transitions, termination propagation control, or fallback replanning.
 
 ## Future P5 slices
 
-Later P5 work may add fallback replanning and verifier orchestration. Those must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
+Later P5 work may add verifier orchestration. It must be implemented incrementally with tests and may not cross into tokenizer, training, model-weight, persistent-memory, or privileged-tool ownership.
