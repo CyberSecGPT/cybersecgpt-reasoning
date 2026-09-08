@@ -210,10 +210,15 @@ def test_result_rejects_candidate_request_mismatch() -> None:
 def test_route_selected_requires_selected_fallback_substrates() -> None:
     result = _successful_result()
     empty_selection = _with_fallback_selection(result.candidate_selection, ())
-    assert RoutingDecisionReasonCode.CAPABILITY_MATCH not in empty_selection.reason_codes
+    assert RoutingDecisionReasonCode.CAPABILITY_MATCH not in (
+        empty_selection.reason_codes
+    )
     values = _result_values(result)
     values["candidate_selection"] = empty_selection
-    with pytest.raises(FallbackReplanError, match="requires selected fallback substrates"):
+    with pytest.raises(
+        FallbackReplanError,
+        match="requires selected fallback substrates",
+    ):
         FallbackReplanResult(**values)  # type: ignore[arg-type]
 
 
