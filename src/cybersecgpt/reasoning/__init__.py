@@ -19,6 +19,7 @@ from .candidates import (
 from .errors import (
     BrainRequestError,
     CandidateSelectionError,
+    FallbackReplanError,
     ReasoningBudgetError,
     ReasoningError,
     ReasoningLifecycleError,
@@ -27,6 +28,13 @@ from .errors import (
     RoutingReasoningBudgetError,
     SubstrateDiscoveryError,
     TerminationPropagationError,
+)
+from .fallback import (
+    FallbackReplanPolicy,
+    FallbackReplanResult,
+    FallbackReplanStatus,
+    FallbackTrigger,
+    replan_fallback_route,
 )
 from .lifecycle import (
     ReasoningLifecycleSnapshot,
@@ -95,6 +103,12 @@ __all__ = [
     "CandidateEvaluation",
     "CandidateSelectionResult",
     "select_candidate_substrates",
+    "FallbackReplanError",
+    "FallbackTrigger",
+    "FallbackReplanStatus",
+    "FallbackReplanPolicy",
+    "FallbackReplanResult",
+    "replan_fallback_route",
     "ReasoningBudgetError",
     "ReasoningBudgetExceededError",
     "ReasoningBudget",

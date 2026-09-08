@@ -28,4 +28,8 @@
 - Immutable active-component `TerminationTarget`, `TerminationPropagation`, and external `TerminationAcknowledgement` control contracts for model, retrieval, tool, and verifier work.
 - Monotonic stop acknowledgement sequencing with explicit pending, cleanup-pending, failed-to-stop, late, and propagation-deadline visibility.
 - A fail-closed termination invariant that blocks new side effects after propagation starts while leaving actual stop/cleanup execution and authorization to their owning runtime/security boundaries.
+- Deterministic P5 fallback replanning through immutable versioned `FallbackReplanPolicy`, typed fallback triggers, and explicit route-selected/no-valid-route outcomes.
+- Fresh replacement `RoutingDecision` identities that preserve request/security boundaries, use the current capability/candidate state, and never silently widen provider/network or substrate permissions.
+- Cumulative reasoning-budget continuity across fallback routes so candidates, depth, steps, model tokens, tool calls, retrieval calls, and verifier passes cannot be reset by replanning.
+- Explicit fallback exhaustion and cancellation/deadline blocking behavior, including deterministic exclusion of failed/unavailable substrates and policy-controlled prior-substrate reuse.
 - Python 3.11–3.13 CI with strict static, security, coverage, build, and distribution checks.

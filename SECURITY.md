@@ -2,7 +2,7 @@
 
 ## Security boundary
 
-`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, reasoning state, and termination propagation as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
+`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, reasoning state, termination propagation, and fallback replanning as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
 
 ## Required properties
 
@@ -50,6 +50,15 @@
 - require a `STOPPED` acknowledgement to preserve evidence or explicitly mark evidence as not applicable;
 - keep cleanup authorization external to Reasoning and never treat a cleanup reference as permission created by the termination layer;
 - allow safe-stop propagation after routing expiry/revocation without allowing that propagation to authorize continuation or new work;
+- require fallback replanning to create a fresh routing decision rather than mutate or reuse the failed decision;
+- require fallback owner, substrate-kind, network-class, degraded-route, and fan-out constraints to be subsets of the active candidate-selection policy;
+- preserve request/correlation identity, authoritative authorization context, effective classification, provider/network policy, and offline requirements across fallback replanning;
+- forbid fallback from widening latency, compute, memory, deadline, accuracy, determinism, explainability, verification, or reasoning-budget ceilings;
+- carry already-consumed reasoning-budget usage into a replacement route and never reset counters because fallback occurred;
+- exclude failed/unavailable substrates deterministically and require explicit policy before prior-substrate reuse;
+- return explicit no-valid-route state when every permitted fallback is exhausted rather than relaxing policy or selecting an unapproved provider;
+- block fallback replanning when an active cancellation/deadline termination requirement exists;
+- never treat fallback policy, fallback result, replacement routing metadata, remaining budget, or route availability as authorization;
 - never treat candidate agreement, remaining budget, lifecycle state, termination state, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
@@ -61,6 +70,8 @@ Substrate discovery validates the structure, externally supplied validation fact
 Candidate selection consumes only admitted request state, validated discovery state, the current `RoutingSecurityBinding`, and explicit machine-evaluable router constraints. It does not authenticate those authoritative inputs, mint or extend a grant, execute a substrate, bypass the security-policy evaluator, lower classification, widen provider/network permission, or permit a side effect. A candidate result remains a proposal for later routing-decision admission and current-state revalidation.
 
 Cancellation/deadline propagation is Reasoning-owned control metadata for determining that active work must stop and for collecting structured external stop/cleanup acknowledgements. It does not send process signals, cancel model-serving requests, execute tools, perform cleanup, authenticate cleanup authorization, or replace side-effect-boundary policy revalidation. A termination requirement that is not currently active is also not an authorization result.
+
+Fallback replanning is a Reasoning-owned fresh-route control operation. It may narrow routing choices and preserve cumulative budget state, but it cannot widen security or resource boundaries, create a grant, change authoritative classification, silently enable a provider/network class, execute the replacement substrate, or authorize a side effect. A failed native route therefore never implies permission to use a remote or externally owned provider.
 
 ## Reporting a vulnerability
 
