@@ -111,6 +111,10 @@ def test_scalar_validators_cover_all_fail_closed_branches() -> None:
 
 def test_verification_policy_rejects_invalid_control_fields() -> None:
     policy = make_verification_policy()
+    assert (
+        policy.independence_requirement
+        is VerificationIndependenceRequirement.NONE
+    )
     with pytest.raises(
         VerificationOrchestrationError,
         match="independence_requirement",
