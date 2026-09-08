@@ -28,6 +28,7 @@ from .errors import (
     RoutingReasoningBudgetError,
     SubstrateDiscoveryError,
     TerminationPropagationError,
+    VerificationOrchestrationError,
 )
 from .fallback import (
     FallbackReplanPolicy,
@@ -79,6 +80,20 @@ from .termination import (
     begin_termination_propagation,
     evaluate_termination_propagation,
     evaluate_termination_requirement,
+)
+from .verification import (
+    VerificationAssertionResult,
+    VerificationAssertionStatus,
+    VerificationEvidenceReference,
+    VerificationIndependenceRequirement,
+    VerificationOrchestrationState,
+    VerificationPolicy,
+    VerificationResult,
+    VerificationStatus,
+    VerifierObservation,
+    begin_verification_orchestration,
+    finalize_verification,
+    record_verifier_observation,
 )
 
 __all__ = [
@@ -147,4 +162,17 @@ __all__ = [
     "begin_termination_propagation",
     "acknowledge_termination_target",
     "evaluate_termination_propagation",
+    "VerificationOrchestrationError",
+    "VerificationStatus",
+    "VerificationAssertionStatus",
+    "VerificationIndependenceRequirement",
+    "VerificationPolicy",
+    "VerificationEvidenceReference",
+    "VerifierObservation",
+    "VerificationAssertionResult",
+    "VerificationOrchestrationState",
+    "VerificationResult",
+    "begin_verification_orchestration",
+    "record_verifier_observation",
+    "finalize_verification",
 ]
