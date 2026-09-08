@@ -3,6 +3,7 @@
 __all__ = [
     "BrainRequestError",
     "CandidateSelectionError",
+    "FallbackReplanError",
     "ReasoningError",
     "ReasoningBudgetError",
     "ReasoningLifecycleError",
@@ -24,6 +25,10 @@ class BrainRequestError(ReasoningError):
 
 class CandidateSelectionError(ReasoningError):
     """Report invalid deterministic substrate candidate selection state."""
+
+
+class FallbackReplanError(ReasoningError):
+    """Report invalid or unsafe fallback replanning control state."""
 
 
 class ReasoningBudgetError(ReasoningError):
