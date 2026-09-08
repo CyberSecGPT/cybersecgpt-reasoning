@@ -2,7 +2,7 @@
 
 ## Security boundary
 
-`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, and reasoning state as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
+`cybersecgpt-reasoning` treats request, substrate-discovery, candidate-selection, routing, reasoning state, and termination propagation as control/proposal metadata, never as authorization. Authoritative policy and authorization remain external to this repository. Privileged execution must revalidate current policy, authorization, scope, effective classification, routing bindings, and other required controls immediately before side effects.
 
 ## Required properties
 
@@ -42,7 +42,15 @@
 - preserve immutable lifecycle snapshots with monotonic transition sequences and routing-bound budget snapshots;
 - make terminal lifecycle outcomes final so completed, deferred, denied, failed, or cancelled work cannot be resumed by mutating control state;
 - allow the `EXECUTING_AUTHORIZED_TOOL` lifecycle state only after `AWAITING_POLICY`, while never treating that state transition as an authorization grant;
-- never treat candidate agreement, remaining budget, lifecycle state, or a budget profile as authorization or verified fact;
+- evaluate cancellation, request deadlines, and terminal lifecycle state against exact request/decision/correlation bindings;
+- block new side effects once cancellation/deadline propagation begins;
+- preserve immutable active-component stop targets and monotonic acknowledgements;
+- reject unknown, duplicate, cross-target, pre-start, or malformed termination acknowledgements;
+- keep failed-to-stop, cleanup-pending, missing, late, and propagation-deadline state explicit rather than silently treating it as successful stop;
+- require a `STOPPED` acknowledgement to preserve evidence or explicitly mark evidence as not applicable;
+- keep cleanup authorization external to Reasoning and never treat a cleanup reference as permission created by the termination layer;
+- allow safe-stop propagation after routing expiry/revocation without allowing that propagation to authorize continuation or new work;
+- never treat candidate agreement, remaining budget, lifecycle state, termination state, or a budget profile as authorization or verified fact;
 - require a fresh authorized routing decision before any future budget enlargement is admitted;
 - emit caller-safe typed failures without secrets or private chain-of-thought.
 
@@ -52,7 +60,7 @@ Substrate discovery validates the structure, externally supplied validation fact
 
 Candidate selection consumes only admitted request state, validated discovery state, the current `RoutingSecurityBinding`, and explicit machine-evaluable router constraints. It does not authenticate those authoritative inputs, mint or extend a grant, execute a substrate, bypass the security-policy evaluator, lower classification, widen provider/network permission, or permit a side effect. A candidate result remains a proposal for later routing-decision admission and current-state revalidation.
 
-Cancellation state is terminal in the current lifecycle contract. Propagation of cancellation to active model/tool/retrieval/verifier components is a separate required P5 integration and is not claimed by this slice.
+Cancellation/deadline propagation is Reasoning-owned control metadata for determining that active work must stop and for collecting structured external stop/cleanup acknowledgements. It does not send process signals, cancel model-serving requests, execute tools, perform cleanup, authenticate cleanup authorization, or replace side-effect-boundary policy revalidation. A termination requirement that is not currently active is also not an authorization result.
 
 ## Reporting a vulnerability
 
