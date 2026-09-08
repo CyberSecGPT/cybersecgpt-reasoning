@@ -462,6 +462,10 @@ def test_record_rejects_removed_and_reclassified_verifier() -> None:
 def test_aggregation_requires_required_evidence_class() -> None:
     result = finish(record(make_state(), observation(evidence_refs=())))
     assert result.status is VerificationStatus.INSUFFICIENT_EVIDENCE
+    assert (
+        result.assertion_results[0].status
+        is VerificationAssertionStatus.INSUFFICIENT_EVIDENCE
+    )
 
 
 def test_aggregation_skips_unadmitted_evidence_in_corrupted_internal_state() -> None:
