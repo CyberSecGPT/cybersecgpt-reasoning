@@ -32,4 +32,8 @@
 - Fresh replacement `RoutingDecision` identities that preserve request/security boundaries, use the current capability/candidate state, and never silently widen provider/network or substrate permissions.
 - Cumulative reasoning-budget continuity across fallback routes so candidates, depth, steps, model tokens, tool calls, retrieval calls, and verifier passes cannot be reset by replanning.
 - Explicit fallback exhaustion and cancellation/deadline blocking behavior, including deterministic exclusion of failed/unavailable substrates and policy-controlled prior-substrate reuse.
+- Immutable verifier policies, evidence references, external observations, assertion results, orchestration state, and terminal verification results.
+- Deterministic verifier selection from current validated `VERIFIER` substrates with self-verification exclusion and machine-evaluable deterministic/distinct-owner independence requirements.
+- Routing-bound verifier-pass accounting with current routing/security, capability-snapshot, lifecycle, cancellation, deadline, evidence-catalogue, and budget revalidation at each orchestration step.
+- Fail-closed aggregation that keeps generation separate from verification and prevents unsupported, contradictory, insufficient-evidence, policy-blocked, cancelled, deadline, resource-limit, or verification-error outcomes from becoming supported.
 - Python 3.11–3.13 CI with strict static, security, coverage, build, and distribution checks.
