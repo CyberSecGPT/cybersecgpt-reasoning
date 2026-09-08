@@ -2,7 +2,6 @@
 
 from dataclasses import FrozenInstanceError
 from datetime import timedelta
-from typing import cast
 
 import pytest
 from cybersecgpt.foundation import (
@@ -26,12 +25,14 @@ from cybersecgpt.reasoning import (
     FallbackTrigger,
     ReasoningBudget,
     ReasoningBudgetDelta,
+    ReasoningBudgetUsage,
     RoutingDecision,
     RoutingDecisionInvalidReason,
     RoutingDecisionReasonCode,
     RoutingReasoningBudgetUsage,
     SubstrateAvailabilityState,
     SubstrateKind,
+    TerminationReason,
     TerminationRequirement,
     begin_routing_reasoning_budget,
     consume_routing_reasoning_budget,
@@ -50,6 +51,8 @@ from tests.test_candidates import (
 
 PRIMARY_ID = SubstrateId("model:native-primary")
 FALLBACK_ID = SubstrateId("model:native-fallback")
+PRIMARY_DECISION_ID = RoutingDecisionId("route-primary")
+FALLBACK_DECISION_ID = RoutingDecisionId("route-fallback")
 OWNER = "CyberSecGPT/cybersecgpt-inference"
 
 
@@ -74,7 +77,7 @@ def make_fallback_descriptor(**overrides: object):
 def make_decision(
     request: BrainRequest,
     *,
-    decision_id: RoutingDecisionId = RoutingDecisionId("route-primary"),
+    decision_id: RoutingDecisionId = PRIMARY_DECISION_ID,
     selected_substrates: tuple[SubstrateId, ...] = (PRIMARY_ID,),
     created_at=NOW - timedelta(minutes=1),
     expires_at=NOW + timedelta(minutes=4),
@@ -117,8 +120,8 @@ def make_termination_requirement(
         correlation_id=request.correlation_id,
         evaluated_at=NOW,
         required=required,
-        reason=None if not required else cast(object, "CANCELLATION"),
-        triggered_at=None,
+        reason=TerminationReason.CANCELLATION if required else None,
+        triggered_at=NOW - timedelta(seconds=1) if required else None,
     )
 
 
@@ -166,7 +169,7 @@ def run_replan(
     trigger: FallbackTrigger = FallbackTrigger.PRIMARY_ROUTE_UNAVAILABLE,
     unavailable_substrates: tuple[SubstrateId, ...] = (PRIMARY_ID,),
     current_binding: RoutingSecurityBinding | None = None,
-    new_decision_id: RoutingDecisionId = RoutingDecisionId("route-fallback"),
+    new_decision_id: RoutingDecisionId = FALLBACK_DECISION_ID,
     replacement_expires_at=NOW + timedelta(minutes=2),
 ) -> FallbackReplanResult:
     previous = previous_request or make_request()
@@ -206,20 +209,18 @@ def test_fallback_selects_fresh_route_and_carries_consumed_budget() -> None:
     result = run_replan()
 
     assert result.status is FallbackReplanStatus.ROUTE_SELECTED
-    assert result.previous_decision_id == RoutingDecisionId("route-primary")
+    assert result.previous_decision_id == PRIMARY_DECISION_ID
     assert result.unavailable_substrates == (PRIMARY_ID,)
     assert result.candidate_selection.selected_substrates == (FALLBACK_ID,)
     assert result.replacement_decision is not None
-    assert result.replacement_decision.decision_id == RoutingDecisionId("route-fallback")
+    assert result.replacement_decision.decision_id == FALLBACK_DECISION_ID
     assert result.replacement_decision.selected_substrates == (FALLBACK_ID,)
     assert (
         RoutingDecisionReasonCode.PRIMARY_ROUTE_UNAVAILABLE
         in result.replacement_decision.reason_codes
     )
     assert result.replacement_budget_state is not None
-    assert result.replacement_budget_state.decision_id == RoutingDecisionId(
-        "route-fallback"
-    )
+    assert result.replacement_budget_state.decision_id == FALLBACK_DECISION_ID
     assert result.replacement_budget_state.usage.steps == 2
     assert result.replacement_budget_state.usage.model_tokens == 100
     assert result.replacement_budget_state.usage.budget == make_budget()
@@ -248,7 +249,10 @@ def test_fallback_policy_prevents_implicit_network_or_owner_broadening() -> None
     result = run_replan(snapshot=snapshot, candidate_policy=candidate_policy)
 
     assert result.candidate_selection.selected_substrates == (FALLBACK_ID,)
-    assert SubstrateId("model:remote") not in result.candidate_selection.selected_substrates
+    assert (
+        SubstrateId("model:remote")
+        not in result.candidate_selection.selected_substrates
+    )
 
 
 def test_fallback_returns_explicit_no_valid_route_without_relaxation() -> None:
@@ -333,7 +337,7 @@ def test_fallback_rejects_active_termination_state() -> None:
         correlation_id=request.correlation_id,
         evaluated_at=NOW,
         required=True,
-        reason=cast(object, __import__("cybersecgpt.reasoning", fromlist=["TerminationReason"]).TerminationReason.CANCELLATION),
+        reason=TerminationReason.CANCELLATION,
         triggered_at=NOW - timedelta(seconds=1),
     )
     with pytest.raises(FallbackReplanError, match="forbidden after cancellation"):
@@ -415,7 +419,9 @@ def test_fallback_rejects_request_and_correlation_identity_changes() -> None:
     with pytest.raises(FallbackReplanError, match="request identity"):
         run_replan(previous_request=previous, current_request=changed_request)
 
-    changed_correlation = make_request(correlation_id=CorrelationId("other-correlation"))
+    changed_correlation = make_request(
+        correlation_id=CorrelationId("other-correlation")
+    )
     with pytest.raises(FallbackReplanError, match="correlation identity"):
         run_replan(previous_request=previous, current_request=changed_correlation)
 
@@ -617,7 +623,7 @@ def test_fallback_rejects_budget_binding_mismatches() -> None:
     )
     forged_state = RoutingReasoningBudgetUsage(
         decision_id=decision.decision_id,
-        usage=cast(object, __import__("cybersecgpt.reasoning", fromlist=["ReasoningBudgetUsage"]).ReasoningBudgetUsage(budget=other_budget)),
+        usage=ReasoningBudgetUsage(budget=other_budget),
     )
     with pytest.raises(FallbackReplanError, match="usage must match"):
         run_replan(
@@ -629,7 +635,7 @@ def test_fallback_rejects_budget_binding_mismatches() -> None:
 
 def test_fallback_rejects_new_decision_deadline_extension_and_identity_reuse() -> None:
     with pytest.raises(FallbackReplanError, match="fresh identity"):
-        run_replan(new_decision_id=RoutingDecisionId("route-primary"))
+        run_replan(new_decision_id=PRIMARY_DECISION_ID)
 
     with pytest.raises(FallbackReplanError, match="outlive"):
         run_replan(replacement_expires_at=NOW + timedelta(minutes=6))
